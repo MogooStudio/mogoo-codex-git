@@ -1,0 +1,20 @@
+{
+  "name": "codex-git-lens",
+  "version": "0.2.1",
+  "private": true,
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/MogooStudio/mogoo-codex-git.git" },
+  "type": "module",
+  "packageManager": "pnpm@11.9.0",
+  "engines": { "node": ">=22.12" },
+  "scripts": {
+    "dev": "node server/index.mjs --dev",
+    "build": "vite build",
+    "start": "node server/index.mjs",
+    "open:chat": "node scripts/open-chat.mjs",
+    "plugin:build": "pnpm build && node scripts/package-plugin.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "dependencies": { "react": "^19.2.0", "react-dom": "^19.2.0", "lucide-react": "^0.468.0" },
+  "devDependencies": { "vite": "^7.1.0" }
+}

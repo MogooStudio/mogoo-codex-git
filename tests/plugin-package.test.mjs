@@ -1,0 +1,70 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import os from 'node:os';
+import http from 'node:http';
+import { pathToFileURL } from 'node:url';
+import { execFile, execFileSync } from 'node:child_process';
+import { promisify } from 'node:util';
+import { mkdtemp, realpath, readdir, readFile, access, mkdir, rm, writeFile } from 'node:fs/promises';
+import { packagePlugin } from '../scripts/package-plugin.mjs';
+
+test('发布包：搬到独立目录后无需源码或 node_modules 即可运行，清单和聊天绑定保持有效', async t => {
+  const base = await realpath(await mkdtemp(path.join(os.tmpdir(), 'git-lens-package-')));
+  t.after(async () => {
+    assert.equal(path.dirname(base), await realpath(os.tmpdir()));
+    assert.ok(path.basename(base).startsWith('git-lens-package-'));
+    await rm(base, { recursive: true, force: true });
+  });
+  const result = await packagePlugin(path.join(base, '独立 分发目录'));
+  await writeFile(path.join(base, 'package.json'), '{"name":"parent-workspace-must-not-install","dependencies":{"git-lens-does-not-exist":"99.0.0"}}');
+  await writeFile(path.join(base, 'pnpm-workspace.yaml'), 'packages:\n  - "**"\nverifyDepsBeforeRun: install\n');
+  const root = result.pluginRoot;
+  const manifest = JSON.parse(await readFile(path.join(root, 'plugin.json'), 'utf8'));
+  const overlay = JSON.parse(await readFile(path.join(root, '.codex-plugin', 'plugin.json'), 'utf8'));
+  const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
+  assert.equal(manifest.name, 'git-lens');
+  assert.equal(manifest.version, pkg.version);
+  assert.equal(overlay.version, pkg.version);
+  assert.equal(overlay.skills, './skills/');
+  assert.equal(pkg.dependencies, undefined);
+  await assert.rejects(() => access(path.join(root, 'node_modules')));
+  await assert.rejects(() => access(path.join(root, 'src')));
+  const files = await readdir(root, { recursive: true });
+  for (const file of files.filter(file => /\.(mjs|md|json|js)$/.test(file))) {
+    const text = await readFile(path.join(root, file), 'utf8');
+    assert.doesNotMatch(text, /F:[\\/]mogoo[\\/]workspace|C:[\\/]Users[\\/]Administrator/, file);
+  }
+  const checkout = path.join(base, '调用方 仓库');
+  await mkdir(checkout);
+  execFileSync('git', ['init', '-b', 'main'], { cwd: checkout, windowsHide: true, stdio: 'ignore' });
+  const packagedServer = await import(pathToFileURL(path.join(root, 'server', 'index.mjs')).href);
+  const packagedLauncher = await import(pathToFileURL(path.join(root, 'scripts', 'open-chat.mjs')).href);
+  const server = await packagedServer.createServer();
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const port = server.address().port;
+  const launched = await packagedLauncher.openChat({ cwd: checkout, port });
+  assert.equal(launched.state, 'ready');
+  assert.equal(launched.root, checkout);
+  assert.equal(launched.serviceReused, true);
+  assert.equal(new URL(launched.url).searchParams.get('cwd'), checkout);
+  const response = await fetch(launched.url);
+  assert.equal(response.status, 200);
+  assert.match(await response.text(), /Git Lens/);
+  const health = await (await fetch(`http://127.0.0.1:${port}/api/health`, { headers: { 'X-Git-Lens': '1' } })).json();
+  assert.equal(health.instance, packagedLauncher.instanceId);
+  const pnpmCli = process.env.npm_execpath;
+  assert.ok(pnpmCli, '请通过 pnpm test 执行真实包管理器回归测试');
+  const { stdout } = await promisify(execFile)(process.execPath, [pnpmCli, '--silent', '--dir', root, 'open:chat', '--cwd', checkout, '--port', String(port)], {
+    cwd: base, windowsHide: true, timeout: 15000,
+  });
+  assert.equal(JSON.parse(stdout.trim()).root, checkout);
+  await assert.rejects(() => access(path.join(base, 'pnpm-lock.yaml')));
+  await assert.rejects(() => access(path.join(root, 'node_modules')));
+  const other = http.createServer((req, res) => { res.setHeader('Content-Type', 'application/json'); res.end('{"app":"other-service"}'); });
+  await new Promise(resolve => other.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => other.close(resolve)));
+  await assert.rejects(() => packagedLauncher.openChat({ cwd: checkout, port: other.address().port }), /占用/);
+  assert.equal((await fetch(`http://127.0.0.1:${other.address().port}`)).status, 200);
+});
