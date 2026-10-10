@@ -73,6 +73,13 @@ test('发布包：搬到独立目录后无需源码或 node_modules 即可运行
   assert.match(await response.text(), /mogoo-codex-git/);
   const health = await (await fetch(`http://127.0.0.1:${port}/api/health`, { headers: { 'X-Git-Lens': '1' } })).json();
   assert.equal(health.instance, packagedLauncher.instanceId);
+  // The documented skill entry runs with Node alone; pnpm is a developer tool.
+  const { stdout: nodeOutput } = await promisify(execFile)(process.execPath, [path.join(root, 'scripts', 'open-chat.mjs'), '--cwd', checkout, '--port', String(port)], {
+    cwd: base, windowsHide: true, timeout: 15000,
+  });
+  assert.equal(JSON.parse(nodeOutput.trim()).root, checkout);
+  const skill = await readFile(path.join(root, 'skills', 'git-lens', 'SKILL.md'), 'utf8');
+  assert.match(skill, /node \(Join-Path \$taskPluginRoot 'scripts\/open-chat\.mjs'\)/);
   const pnpmCli = process.env.npm_execpath;
   assert.ok(pnpmCli, '请通过 pnpm test 执行真实包管理器回归测试');
   const { stdout } = await promisify(execFile)(process.execPath, [pnpmCli, '--silent', '--dir', root, 'open:chat', '--cwd', checkout, '--port', String(port)], {

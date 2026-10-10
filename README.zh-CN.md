@@ -19,18 +19,20 @@ Codex 中的只读 Git 面板。自动打开当前聊天的仓库或 worktree，
 
 ## 安装
 
-需要 Codex、Git、Node.js 22.12+ 和 pnpm 11.9.0。已在 Windows 验证。
+把这句话交给支持安装 Codex 插件的 Agent：
+
+```text
+请帮我安装这个 Codex 插件：https://github.com/MogooStudio/mogoo-codex-git
+```
+
+或者在终端运行：
 
 ```powershell
-git clone https://github.com/MogooStudio/mogoo-codex-git.git
-cd mogoo-codex-git
-pnpm install
-pnpm plugin:build
-codex plugin marketplace add .\release\mogoo-codex-git-0.2.1 --json
+codex plugin marketplace add MogooStudio/mogoo-codex-git --json
 codex plugin add mogoo-codex-git@mogoo-codex-git --json
 ```
 
-插件内置构建好的界面和服务。更新与卸载见[插件说明](codex/PLUGIN-README.md)。
+需要支持 `codex plugin` 命令的 Codex、Git 和 Node.js 22.12+，已在 Windows 验证。插件内置构建好的界面和服务，安装时无需手动克隆、pnpm 或构建。更新、旧版迁移与卸载见[插件说明](codex/PLUGIN-README.md)。
 
 ## 使用
 
@@ -42,14 +44,20 @@ codex plugin add mogoo-codex-git@mogoo-codex-git --json
 
 ## 开发
 
+开发需要 pnpm 11.9.0。克隆仓库后运行 `pnpm install`。
+
 ```powershell
 pnpm dev     # 开发服务
 pnpm test    # 集成测试
 pnpm build   # 生产构建
 pnpm start   # 启动生产构建
+pnpm marketplace:sync  # 构建并更新仓库内供 GitHub 安装的插件包
+pnpm marketplace:check # 检查分发文件是否与当前构建一致
 ```
 
 运行 `pnpm open:chat --cwd <仓库路径>` 可获取绑定仓库的链接。默认自动选择 4317–4326 端口，也可通过 `GIT_LENS_PORT` 指定。
+
+修改界面、服务或插件技能后，运行 `pnpm marketplace:sync`，将生成的 `plugins/mogoo-codex-git/` 与 `.agents/plugins/marketplace.json` 一起提交。分发文件由源码生成，不要直接编辑。`pnpm plugin:build` 仍可生成独立的本地发布包。
 
 ## 说明
 

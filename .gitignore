@@ -1,5 +1,7 @@
 node_modules/
 dist/
+!plugins/mogoo-codex-git/dist/
+!plugins/mogoo-codex-git/dist/**
 .runtime/
 *.log
 release/

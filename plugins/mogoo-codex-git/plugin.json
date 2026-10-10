@@ -2,7 +2,9 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "mogoo-codex-git",
   "version": "0.2.2",
-  "author": { "name": "mogoo" },
+  "author": {
+    "name": "mogoo"
+  },
   "homepage": "https://github.com/MogooStudio/mogoo-codex-git",
   "repository": "https://github.com/MogooStudio/mogoo-codex-git",
   "license": "MIT",
@@ -16,8 +18,13 @@
         "shortDescription": "自动关联当前聊天仓库，浏览提交、分支与代码差异",
         "longDescription": "本地只读 Git 面板，支持提交关系图、分支和标签筛选、工作区改动、文件差异与 worktree 信息。启动时自动绑定当前聊天的实际目录，多个聊天互不串仓库。内置网页与服务，无需填写仓库路径或连接云端账号。需要本机 Node.js 和 Git。",
         "category": "Developer Tools",
-        "capabilities": ["Read", "Interactive"],
-        "defaultPrompt": ["打开当前聊天的 Git 面板"],
+        "capabilities": [
+          "Read",
+          "Interactive"
+        ],
+        "defaultPrompt": [
+          "打开当前聊天的 Git 面板"
+        ],
         "brandColor": "#8ad4b1",
         "composerIcon": "./assets/icon.svg"
       }

@@ -1,0 +1,21 @@
+{
+  "name": "mogoo-codex-git",
+  "version": "0.2.2",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "author": "mogoo",
+  "homepage": "https://github.com/MogooStudio/mogoo-codex-git",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MogooStudio/mogoo-codex-git.git"
+  },
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "open:chat": "node scripts/open-chat.mjs",
+    "start": "node server/index.mjs"
+  }
+}

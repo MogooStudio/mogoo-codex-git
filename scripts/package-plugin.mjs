@@ -33,7 +33,7 @@ export async function packagePlugin(outputRoot) {
     ['scripts/open-chat.mjs', 'scripts/open-chat.mjs'], ['codex/PLUGIN-README.md', 'README.md'], ['LICENSE', 'LICENSE'], ['THIRD-PARTY-NOTICES.md', 'THIRD-PARTY-NOTICES.md'],
   ]) await cp(path.join(root, source), path.join(pluginRoot, destination), { recursive: true });
   const marketplace = {
-    name: manifest.name, interface: { displayName: `${manifest.extensions['com.openai'].interface.displayName} 本地插件` },
+    name: manifest.name, interface: { displayName: manifest.extensions['com.openai'].interface.displayName },
     plugins: [{ name: manifest.name, source: { source: 'local', path: `./plugins/${manifest.name}` }, policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' }, category: 'Developer Tools' }],
   };
   await mkdir(path.join(output, '.agents', 'plugins'), { recursive: true });

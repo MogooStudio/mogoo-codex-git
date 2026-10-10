@@ -17,18 +17,20 @@ A read-only Git panel for Codex. Open the current chat's repository or worktree 
 
 ## Install
 
-Requires Codex, Git, Node.js 22.12+, and pnpm 11.9.0. Tested on Windows.
+Give this prompt to an agent that can install Codex plugins:
+
+```text
+Please install this Codex plugin: https://github.com/MogooStudio/mogoo-codex-git
+```
+
+Or run in your terminal:
 
 ```powershell
-git clone https://github.com/MogooStudio/mogoo-codex-git.git
-cd mogoo-codex-git
-pnpm install
-pnpm plugin:build
-codex plugin marketplace add .\release\mogoo-codex-git-0.2.1 --json
+codex plugin marketplace add MogooStudio/mogoo-codex-git --json
 codex plugin add mogoo-codex-git@mogoo-codex-git --json
 ```
 
-The plugin includes the built UI and service. See the [plugin guide (Chinese)](codex/PLUGIN-README.md) for updates and removal.
+Requires Codex with the `codex plugin` commands, Git, and Node.js 22.12+. Tested on Windows. The plugin includes the built UI and service; no manual clone, pnpm, or build is needed for installation. See the [plugin guide (Chinese)](codex/PLUGIN-README.md) for updates, migration, and removal.
 
 ## Usage
 
@@ -40,14 +42,20 @@ The panel opens in Codex's browser with the chat's working directory. Invoke it 
 
 ## Development
 
+Development requires pnpm 11.9.0. Clone the repository and run `pnpm install` first.
+
 ```powershell
 pnpm dev     # Development server
 pnpm test    # Integration tests
 pnpm build   # Production build
 pnpm start   # Serve the production build
+pnpm marketplace:sync  # Build and update the bundled GitHub-installable plugin
+pnpm marketplace:check # Check bundled files against the current build
 ```
 
 To get a repository-bound URL, run `pnpm open:chat --cwd <repository-path>`. Set `GIT_LENS_PORT` to override automatic port selection (4317–4326).
+
+After changing the UI, service, or plugin skill, run `pnpm marketplace:sync` and commit the generated `plugins/mogoo-codex-git/` and `.agents/plugins/marketplace.json` together. Do not edit generated distribution files directly. `pnpm plugin:build` still creates a standalone local distribution.
 
 ## Notes
 
