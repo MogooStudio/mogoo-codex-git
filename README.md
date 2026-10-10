@@ -2,8 +2,6 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-作者：**mogoo** · 网站：[mogoo-codex-git](https://github.com/MogooStudio/mogoo-codex-git)
-
 A read-only Git panel for Codex. Open the current chat's repository or worktree automatically and explore commits, branches, and file diffs.
 
 ![mogoo-codex-git commit history and file diff](docs/images/mogoo-codex-git-overview.png)
