@@ -1,4 +1,4 @@
-# Git Lens 界面规范
+# mogoo-codex-git 界面规范
 
 依据 `concept.png`（内置 Image Gen 生成）实现。概念图中的仓库、提交、人员及代码仅为布局示例，产品必须显示真实读取结果，不预置演示数据。
 

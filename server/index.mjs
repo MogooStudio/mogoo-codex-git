@@ -55,5 +55,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   const server = await createServer({ dev: process.argv.includes('--dev') });
   const port = Number(process.env.GIT_LENS_PORT || 4317);
   server.on('error', error => { console.error(`启动失败：${error.message}`); process.exitCode = 1; });
-  server.listen(port, '127.0.0.1', () => console.log(`Git Lens 只读面板：http://127.0.0.1:${server.address().port}`));
+  server.listen(port, '127.0.0.1', () => console.log(`mogoo-codex-git 只读面板：http://127.0.0.1:${server.address().port}`));
 }

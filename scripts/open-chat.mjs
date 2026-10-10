@@ -43,7 +43,7 @@ export async function openChat({ cwd, port }) {
   }
   const base = `http://127.0.0.1:${port}`;
   const service = await inspectService(base);
-  if (service === 'occupied') throw new Error(`端口 ${port} 被其他服务或旧版 Git Lens 占用，请先确认并重启对应服务。`);
+  if (service === 'occupied') throw new Error(`端口 ${port} 被其他服务或旧版 mogoo-codex-git 占用，请先确认并重启对应服务。`);
   if (service === 'stopped') {
     try { await access(path.join(projectDir, 'dist', 'index.html')); }
     catch { throw new Error('缺少内置界面，请重新安装完整插件；源码开发环境可运行 pnpm build。'); }
@@ -60,7 +60,7 @@ export async function openChat({ cwd, port }) {
       if (state === 'ready') { ready = true; break; }
       if (state === 'occupied') throw new Error('服务启动期间端口被其他程序占用。');
     }
-    if (!ready) throw new Error('Git Lens 服务未能在 8 秒内启动，请查看 pnpm start 的错误输出。');
+    if (!ready) throw new Error('mogoo-codex-git 服务未能在 8 秒内启动，请查看 pnpm start 的错误输出。');
   }
   return { ...context, url: chatUrl(base, context.cwd), serviceReused: service === 'ready' };
 }

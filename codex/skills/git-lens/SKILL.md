@@ -1,6 +1,6 @@
 ---
 name: git-lens
-description: 在 Codex 内置浏览器打开本机只读 Git 可视化面板，自动关联当前聊天正在工作的仓库或 worktree。用于“打开 Git 面板”“查看分支图”或明确要求使用 Git Lens；普通 Git 命令不触发此入口。
+description: 在 Codex 内置浏览器打开本机只读 Git 可视化面板，自动关联当前聊天正在工作的仓库或 worktree。用于“打开 Git 面板”“查看分支图”或明确要求使用 mogoo-codex-git（原 Git Lens）；普通 Git 命令不触发此入口。
 ---
 
 # 打开当前聊天的 Git 面板
@@ -9,7 +9,7 @@ description: 在 Codex 内置浏览器打开本机只读 Git 可视化面板，�
 
 先根据本技能实际加载路径定位插件根目录：`skills/git-lens/SKILL.md` 向上三级即为根目录，应包含 `plugin.json`、`package.json`、`scripts/open-chat.mjs` 和 `dist/index.html`。将实际路径保存为 `$taskPluginRoot`。使用安装副本的位置，不查找或调用原始开发项目；相对路径以技能文件的位置为基准，不以聊天目录为基准。
 
-1. 确定当前聊天的实际执行目录。通常直接使用本回合 `environment_context.cwd`；若本任务明确在已关联 worktree 中工作，使用该 worktree 的实际路径。需要核实时，在默认聊天目录执行 `Get-Location`，或查看本聊天的 `list_artifacts`。多个附件不能任取第一个。不要使用 Git Lens 安装目录、浏览器旧地址或其他聊天的目录替代。
+1. 确定当前聊天的实际执行目录。通常直接使用本回合 `environment_context.cwd`；若本任务明确在已关联 worktree 中工作，使用该 worktree 的实际路径。需要核实时，在默认聊天目录执行 `Get-Location`，或查看本聊天的 `list_artifacts`。多个附件不能任取第一个。不要使用 mogoo-codex-git 安装目录、浏览器旧地址或其他聊天的目录替代。
 2. 将这个路径传给启动入口。PowerShell 示例中，先在默认聊天目录捕获路径，再运行 pnpm：
 
    ```powershell

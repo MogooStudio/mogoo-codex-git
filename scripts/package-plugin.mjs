@@ -9,20 +9,21 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export async function packagePlugin(outputRoot) {
   const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
   const manifest = JSON.parse(await readFile(path.join(root, 'codex', 'plugin.json'), 'utf8'));
+  if (manifest.name !== pkg.name) throw new Error('插件清单与 package.json 名称不一致。');
   if (manifest.version !== pkg.version) throw new Error('插件清单与 package.json 版本不一致。');
   await access(path.join(root, 'dist', 'index.html'));
-  const output = path.resolve(outputRoot || path.join(root, 'release', `git-lens-${pkg.version}`));
+  const output = path.resolve(outputRoot || path.join(root, 'release', `${manifest.name}-${pkg.version}`));
   try { await access(output); throw new Error('输出目录已存在，请选择新目录或先归档旧发布物。'); }
   catch (error) { if (error.code !== 'ENOENT') throw error; }
-  const pluginRoot = path.join(output, 'plugins', 'git-lens');
+  const pluginRoot = path.join(output, 'plugins', manifest.name);
   await mkdir(path.join(pluginRoot, '.codex-plugin'), { recursive: true });
   await mkdir(path.join(pluginRoot, 'scripts'), { recursive: true });
-  const overlay = { name: manifest.name, version: manifest.version, description: manifest.description, skills: './skills/', interface: manifest.extensions['com.openai'].interface };
+  const overlay = { name: manifest.name, version: manifest.version, description: manifest.description, author: manifest.author, homepage: manifest.homepage, repository: manifest.repository, license: manifest.license, skills: './skills/', interface: manifest.extensions['com.openai'].interface };
   const json = value => JSON.stringify(value, null, 2) + '\n';
   await writeFile(path.join(pluginRoot, 'plugin.json'), json(manifest));
   await writeFile(path.join(pluginRoot, '.codex-plugin', 'plugin.json'), json(overlay));
   await writeFile(path.join(pluginRoot, 'package.json'), json({
-    name: pkg.name, version: pkg.version, private: true, type: 'module', license: pkg.license, repository: pkg.repository, packageManager: pkg.packageManager, engines: pkg.engines,
+    name: pkg.name, version: pkg.version, private: true, type: 'module', license: pkg.license, author: pkg.author, homepage: pkg.homepage, repository: pkg.repository, packageManager: pkg.packageManager, engines: pkg.engines,
     scripts: { 'open:chat': 'node scripts/open-chat.mjs', start: 'node server/index.mjs' },
   }));
   // 已构建的运行包没有依赖；隔离父目录工作区，启动时不触发自动安装。
@@ -32,8 +33,8 @@ export async function packagePlugin(outputRoot) {
     ['scripts/open-chat.mjs', 'scripts/open-chat.mjs'], ['codex/PLUGIN-README.md', 'README.md'], ['LICENSE', 'LICENSE'],
   ]) await cp(path.join(root, source), path.join(pluginRoot, destination), { recursive: true });
   const marketplace = {
-    name: 'mogoo-git-lens', interface: { displayName: 'Git Lens 本地插件' },
-    plugins: [{ name: 'git-lens', source: { source: 'local', path: './plugins/git-lens' }, policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' }, category: 'Developer Tools' }],
+    name: manifest.name, interface: { displayName: `${manifest.extensions['com.openai'].interface.displayName} 本地插件` },
+    plugins: [{ name: manifest.name, source: { source: 'local', path: `./plugins/${manifest.name}` }, policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' }, category: 'Developer Tools' }],
   };
   await mkdir(path.join(output, '.agents', 'plugins'), { recursive: true });
   await writeFile(path.join(output, '.agents', 'plugins', 'marketplace.json'), json(marketplace));

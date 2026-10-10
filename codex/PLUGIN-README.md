@@ -1,4 +1,6 @@
-# Git Lens · Codex 插件
+# mogoo-codex-git · Codex 插件
+
+作者：**mogoo** · 网站：[mogoo-codex-git](https://github.com/MogooStudio/mogoo-codex-git)
 
 自动打开当前 Codex 聊天仓库或 worktree 的本地只读 Git 面板。包含提交关系图、分支与标签、工作区改动、文件差异及工作树信息。
 
@@ -10,15 +12,15 @@
 
 ```powershell
 codex plugin marketplace add . --json
-codex plugin add git-lens@mogoo-git-lens --json
-codex plugin list --marketplace mogoo-git-lens --json
+codex plugin add mogoo-codex-git@mogoo-codex-git --json
+codex plugin list --marketplace mogoo-codex-git --json
 ```
 
 这是本地插件市场安装，不会发布到公共插件目录。Codex 使用安装缓存中的完整副本运行插件。保留解压目录作为后续更新来源；移动或移除开发源码不影响已安装副本运行。
 
 ## 使用
 
-在对应项目聊天中选择 Git Lens 插件，或说“用 Git Lens 打开当前聊天的 Git 面板”。插件入口 `git-lens:git-lens` 会自动定位当前目录并打开右侧浏览器，无需填写仓库地址。
+在对应项目聊天中选择 mogoo-codex-git 插件，或说“用 mogoo-codex-git 打开当前聊天的 Git 面板”。插件入口 `mogoo-codex-git:git-lens` 会自动定位当前目录并打开右侧浏览器，无需填写仓库地址。
 
 若当前聊天尚未加载新插件，开启新聊天；插件列表仍未更新时重新启动 Codex。聊天切换工作目录或 handoff 后，再从对应聊天调用入口，面板会使用新的路径。插件不会在后台追踪任意聊天切换。
 
@@ -29,10 +31,17 @@ codex plugin list --marketplace mogoo-git-lens --json
 ## 卸载
 
 ```powershell
-codex plugin remove git-lens@mogoo-git-lens --json
-codex plugin marketplace remove mogoo-git-lens --json
+codex plugin remove mogoo-codex-git@mogoo-codex-git --json
+codex plugin marketplace remove mogoo-codex-git --json
 ```
 
 ## 更新
 
-如果新版包解压在不同路径，先执行 `codex plugin marketplace remove mogoo-git-lens --json` 移除旧市场注册，然后从新目录重新注册市场并安装插件。该步骤不移除其他插件市场。启动器只复用相同安装路径及版本的服务；旧服务不匹配时选择空闲端口，不终止无关进程。
+如果新版包解压在不同路径，先执行 `codex plugin marketplace remove mogoo-codex-git --json` 移除旧市场注册，然后从新目录重新注册市场并安装插件。该步骤不移除其他插件市场。启动器只复用相同安装路径及版本的服务；旧服务不匹配时选择空闲端口，不终止无关进程。
+
+从原 Git Lens 版本迁移时，先移除旧插件与旧市场，再按上方安装步骤注册新发布包：
+
+```powershell
+codex plugin remove git-lens@mogoo-git-lens --json
+codex plugin marketplace remove mogoo-git-lens --json
+```

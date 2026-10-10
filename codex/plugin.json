@@ -1,14 +1,18 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "name": "git-lens",
+  "name": "mogoo-codex-git",
   "version": "0.2.1",
+  "author": { "name": "mogoo" },
+  "homepage": "https://github.com/MogooStudio/mogoo-codex-git",
   "repository": "https://github.com/MogooStudio/mogoo-codex-git",
   "license": "MIT",
   "description": "在 Codex 中自动关联当前聊天仓库或 worktree 的本地只读 Git 可视化面板。",
   "extensions": {
     "com.openai": {
       "interface": {
-        "displayName": "Git Lens",
+        "displayName": "mogoo-codex-git",
+        "developerName": "mogoo",
+        "websiteURL": "https://github.com/MogooStudio/mogoo-codex-git",
         "shortDescription": "自动关联当前聊天仓库，浏览提交、分支与代码差异",
         "longDescription": "本地只读 Git 面板，支持提交关系图、分支和标签筛选、工作区改动、文件差异与 worktree 信息。启动时自动绑定当前聊天的实际目录，多个聊天互不串仓库。内置网页与服务，无需填写仓库路径或连接云端账号。需要本机 Node.js、Git 和 pnpm。",
         "category": "Developer Tools",

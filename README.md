@@ -1,10 +1,12 @@
-# mogoo-codex-git · Git Lens
+# mogoo-codex-git
 
 **English** | [简体中文](README.zh-CN.md)
 
+作者：**mogoo** · 网站：[mogoo-codex-git](https://github.com/MogooStudio/mogoo-codex-git)
+
 A read-only Git panel for Codex. Open the current chat's repository or worktree automatically and explore commits, branches, and file diffs.
 
-![Git Lens commit history and file diff](docs/images/git-lens-overview.jpg)
+![mogoo-codex-git commit history and file diff](docs/images/git-lens-overview.jpg)
 
 ## Features
 
@@ -23,17 +25,17 @@ git clone https://github.com/MogooStudio/mogoo-codex-git.git
 cd mogoo-codex-git
 pnpm install
 pnpm plugin:build
-codex plugin marketplace add .\release\git-lens-0.2.1 --json
-codex plugin add git-lens@mogoo-git-lens --json
+codex plugin marketplace add .\release\mogoo-codex-git-0.2.1 --json
+codex plugin add mogoo-codex-git@mogoo-codex-git --json
 ```
 
 The plugin includes the built UI and service. See the [plugin guide (Chinese)](codex/PLUGIN-README.md) for updates and removal.
 
 ## Usage
 
-In your project chat, select **Git Lens** or ask:
+In your project chat, select **mogoo-codex-git** or ask:
 
-> Use Git Lens to open the Git panel for this chat.
+> 用 mogoo-codex-git 打开当前聊天的 Git 面板。
 
 The panel opens in Codex's browser with the chat's working directory. Invoke it again after switching chats or worktrees. If the plugin is not visible, open a new chat or restart Codex.
 

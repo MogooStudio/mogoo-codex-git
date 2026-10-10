@@ -1,10 +1,12 @@
-# mogoo-codex-git · Git Lens
+# mogoo-codex-git
 
 [English](README.md) | **简体中文**
 
+作者：**mogoo** · 网站：[mogoo-codex-git](https://github.com/MogooStudio/mogoo-codex-git)
+
 Codex 中的只读 Git 面板。自动打开当前聊天的仓库或 worktree，浏览提交、分支和文件差异。
 
-![Git Lens 提交记录与文件差异](docs/images/git-lens-overview.jpg)
+![mogoo-codex-git 提交记录与文件差异](docs/images/git-lens-overview.jpg)
 
 ## 功能
 
@@ -23,17 +25,17 @@ git clone https://github.com/MogooStudio/mogoo-codex-git.git
 cd mogoo-codex-git
 pnpm install
 pnpm plugin:build
-codex plugin marketplace add .\release\git-lens-0.2.1 --json
-codex plugin add git-lens@mogoo-git-lens --json
+codex plugin marketplace add .\release\mogoo-codex-git-0.2.1 --json
+codex plugin add mogoo-codex-git@mogoo-codex-git --json
 ```
 
 插件内置构建好的界面和服务。更新与卸载见[插件说明](codex/PLUGIN-README.md)。
 
 ## 使用
 
-在项目聊天中选择 **Git Lens**，或直接说：
+在项目聊天中选择 **mogoo-codex-git**，或直接说：
 
-> 用 Git Lens 打开当前聊天的 Git 面板。
+> 用 mogoo-codex-git 打开当前聊天的 Git 面板。
 
 面板会在 Codex 浏览器中打开，并关联该聊天的工作目录。切换聊天或 worktree 后再次调用即可。插件未显示时，新开聊天或重启 Codex。
 
