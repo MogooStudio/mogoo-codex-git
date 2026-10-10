@@ -1,0 +1,18 @@
+[
+  {
+    "file": "page-1600x1000-@2x.png",
+    "state": null,
+    "size": "1600x1000",
+    "zoom": 2,
+    "issues": [],
+    "lint": []
+  },
+  {
+    "file": "page-760x1000-@2x.png",
+    "state": null,
+    "size": "760x1000",
+    "zoom": 2,
+    "issues": [],
+    "lint": []
+  }
+]

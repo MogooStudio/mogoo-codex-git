@@ -1,0 +1,36 @@
+[
+  {
+    "file": "light.png",
+    "state": "light",
+    "size": "1600x1000",
+    "zoom": 1,
+    "issues": [],
+    "lint": [
+      {
+        "rule": "longMeasure",
+        "label": "正文行太长",
+        "count": 1,
+        "examples": [
+          "span.str「\"本地只读 Git 面板，支持提交关系图、分支和」（每行约 59 字）"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "dark.png",
+    "state": "dark",
+    "size": "1600x1000",
+    "zoom": 1,
+    "issues": [],
+    "lint": [
+      {
+        "rule": "longMeasure",
+        "label": "正文行太长",
+        "count": 1,
+        "examples": [
+          "span.str「\"本地只读 Git 面板，支持提交关系图、分支和」（每行约 59 字）"
+        ]
+      }
+    ]
+  }
+]

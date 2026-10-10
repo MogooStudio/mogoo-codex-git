@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "lang": "zh",
+  "project": "mogoo-codex-git · B 浅色审阅台定稿",
+  "brief": "已选 B 方向。桌面提交审阅、工作区改动、工作树和 760px 窄面板采用同一套瓷白、冷灰、靛蓝视觉语言。高清静态设计稿，保留可编辑排版源文件。",
+  "round": "B 定稿 · 2026-10-10",
+  "candidates": [
+    {
+      "id": "b-history-final",
+      "name": "提交审阅 · 桌面",
+      "concept": "在纵向提交历史中定位版本，连续阅读右侧文件差异。",
+      "typography": "Segoe UI、Microsoft YaHei UI；正文 13–14px、代码 13px；Consolas 显示代码和哈希。",
+      "palette": [
+        "#ffffff",
+        "#242b3a",
+        "#4b50b5"
+      ],
+      "traits": [
+        "3200 × 2000 PNG",
+        "纵向提交历史",
+        "完整高度的审阅区"
+      ],
+      "kind": "image",
+      "source": "b-final-history-shots/page-@2x.png"
+    },
+    {
+      "id": "b-changes-final",
+      "name": "工作区改动 · 桌面",
+      "concept": "按未暂存、已暂存和未跟踪分组阅读当前仓库文件。",
+      "typography": "中文系统字体与 Consolas；控制区、文件列表和文本预览沿用 B 的字号层级。",
+      "palette": [
+        "#ffffff",
+        "#242b3a",
+        "#4b50b5"
+      ],
+      "traits": [
+        "3200 × 2000 PNG",
+        "真实工作区快照",
+        "只读文件预览"
+      ],
+      "kind": "image",
+      "source": "bs-changes-shots/page-@2x.png"
+    },
+    {
+      "id": "b-worktrees-final",
+      "name": "工作树 · 桌面",
+      "concept": "清楚显示当前聊天绑定的工作树和仓库引用。",
+      "typography": "中文系统字体与 Consolas；对象名和状态突出，路径为次级等宽信息。",
+      "palette": [
+        "#ffffff",
+        "#242b3a",
+        "#4b50b5"
+      ],
+      "traits": [
+        "3200 × 2000 PNG",
+        "真实工作树",
+        "当前聊天绑定标记"
+      ],
+      "kind": "image",
+      "source": "bs-worktrees-shots/page-@2x.png"
+    },
+    {
+      "id": "b-narrow-final",
+      "name": "提交审阅 · 窄面板",
+      "concept": "在 760px 的 Codex 浏览器面板中保留可读的历史与代码。",
+      "typography": "中文系统字体与等宽代码；内容按窄视口重排，保持约 13px 的实际阅读字号。",
+      "palette": [
+        "#ffffff",
+        "#242b3a",
+        "#4b50b5"
+      ],
+      "traits": [
+        "1520 × 2000 PNG",
+        "760px 逻辑视口",
+        "文件选择入口收拢"
+      ],
+      "kind": "image",
+      "source": "b-narrow-shots/page-@2x.png"
+    }
+  ]
+}

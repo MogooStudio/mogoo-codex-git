@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "lang": "zh",
+  "project": "mogoo-codex-git · 高清界面设计稿",
+  "brief": "已选择 B · 浅色审阅台。同一真实仓库、同一提交与插件清单差异；三版原图均为 3200 × 2000 像素，在单张查看中按实际尺寸检查细节。",
+  "round": "高清设计稿 · 2026-10-10",
+  "candidates": [
+    {
+      "id": "baseline",
+      "name": "当前界面",
+      "baseline": true,
+      "concept": "现有产品的实际运行画面，作为信息密度与布局的对照。",
+      "typography": "Segoe UI、微软雅黑；代码 Consolas；正文约 13px。",
+      "palette": ["#151719", "#1c1f22", "#8ad4b1"],
+      "traits": ["引用侧栏", "上下分区", "当前产品截图"],
+      "kind": "image",
+      "source": "baseline-shots/page-@2x.png"
+    },
+    {
+      "id": "a-obsidian",
+      "name": "A · 深色开发工作台",
+      "concept": "保持仓库导航完整，让提交与代码阅读在同一工作台连续发生。",
+      "typography": "Segoe UI、Microsoft YaHei；正文 14px、代码 13px；哈希和文件名使用 Consolas。",
+      "palette": ["#121517", "#e5e9e9", "#91cdb8"],
+      "traits": ["固定引用侧栏", "提交表与差异上下分区", "薄荷选中状态"],
+      "kind": "image",
+      "source": "a-shots/page-@2x.png"
+    },
+    {
+      "id": "b-porcelain",
+      "name": "B · 浅色审阅台",
+      "concept": "缩短导航的视觉距离，把主要空间留给当前提交与文件差异。",
+      "typography": "Segoe UI、Microsoft YaHei UI；正文 13–14px、代码 13px；代码和哈希使用 Consolas。",
+      "palette": ["#ffffff", "#242b3a", "#4b50b5"],
+      "traits": ["窄导航轨", "纵向提交历史", "右侧完整高度的审阅区"],
+      "kind": "image",
+      "source": "b-shots/page-@2x.png"
+    },
+    {
+      "id": "c-archive",
+      "name": "C · 暖灰档案台",
+      "concept": "用横向版本轨迹建立上下文，再在宽幅档案区阅读当前变更。",
+      "typography": "Segoe UI、Microsoft YaHei UI；正文 13–14px、代码 13px；Cascadia Code 和 Consolas 表达编号与代码。",
+      "palette": ["#faf9f5", "#242621", "#a35b33"],
+      "traits": ["顶部导航", "横向版本轨迹", "暖灰档案式文件与差异区"],
+      "kind": "image",
+      "source": "c-shots/page-@2x.png"
+    }
+  ]
+}

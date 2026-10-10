@@ -1,7 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { GitBranch, RefreshCw, Menu, ShieldCheck, FolderGit2, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { RefreshCw, Folder, X, CodeXml, Network } from 'lucide-react';
 import { api, useResource } from './api.js';
 import { Sidebar, CommitList, CommitInspector, Changes, Worktrees, Message } from './components.jsx';
+import { BranchIcon as GitBranch } from './icons.jsx';
+import { changeGroups } from './diff.mjs';
+import { readTheme, applyTheme } from './theme.js';
+import RefSelect from './RefSelect.jsx';
 
 function RepositoryWorkspace({ repo, mobileOpen, close }) {
   const [view, setView] = useState('history');
@@ -9,17 +13,28 @@ function RepositoryWorkspace({ repo, mobileOpen, close }) {
   const [limit, setLimit] = useState(100);
   const [selection, setSelection] = useState('');
   const [search, setSearch] = useState('');
+  const [mode, setMode] = useState('unstaged');
+  const [selectedFile, setSelectedFile] = useState('');
+  const groups = useMemo(() => changeGroups(repo.files), [repo.files]);
+  const file = groups[mode].find(f => f.path === selectedFile) || groups[mode][0];
   const validFilter = repo.refs.some(ref => ref.name === filter) ? filter : '';
   const { data, error, loading } = useResource('history', view === 'history' ? { path: repo.root, ref: validFilter, limit } : null, repo.refreshedAt, JSON.stringify([repo.root, validFilter]));
   const selected = data?.commits.some(c => c.oid === selection) ? selection : data?.commits[0]?.oid;
-  return <div className="workspace"><Sidebar repo={repo} view={view} setView={setView} filter={validFilter} setFilter={value => { setFilter(value); setLimit(100); setSelection(''); }} mobileOpen={mobileOpen} close={close} /><main className={`main-panel ${view}`}>
-    {view === 'history' && <><div className="history-list">{loading && !data ? <Message>正在读取提交记录…</Message> : error ? <Message error>{error}</Message> : <CommitList data={data} loading={loading} repo={repo} selected={selected} onSelect={setSelection} search={search} setSearch={setSearch} loadMore={() => setLimit(n => Math.min(2000, n + 100))} />}</div><CommitInspector repoPath={repo.root} oid={selected} /></>}
-    {view === 'changes' && <Changes repo={repo} />}
+  const selectFile = (id, path) => { setMode(id); setSelectedFile(path); setView('changes'); close(); };
+  const openView = id => {
+    if (id === 'changes' && !groups[mode].length) setMode(['unstaged','staged','untracked'].find(key => groups[key].length) || 'unstaged');
+    setView(id);
+  };
+  return <div className="workspace"><Sidebar repo={repo} groups={groups} view={view} mode={mode} selected={file?.path} onSelect={selectFile} mobileOpen={mobileOpen} close={close} /><main className="main"><nav className="tabs" aria-label="仓库导航">{[['changes','改动',CodeXml],['history','历史',GitBranch],['worktrees','工作树',Network]].map(([id,label,Icon]) => <button key={id} className={view === id ? 'active' : ''} aria-current={view === id ? 'page' : undefined} onClick={() => openView(id)}><Icon />{label}</button>)}{view === 'history' && <RefSelect refs={repo.refs} value={validFilter} onChange={value => { setFilter(value); setLimit(100); setSelection(''); }} />}</nav>
+    {view === 'history' && <div className="history-content"><section className="log">{loading && !data ? <Message>正在读取提交记录…</Message> : error ? <Message error>{error}</Message> : <CommitList data={data} loading={loading} repo={repo} selected={selected} onSelect={setSelection} search={search} setSearch={setSearch} loadMore={() => setLimit(n => Math.min(2000, n + 100))} />}</section><CommitInspector repoPath={repo.root} oid={selected} /></div>}
+    {view === 'changes' && <Changes repo={repo} groups={groups} mode={mode} setMode={value => { setMode(value); setSelectedFile(''); }} file={file} onSelect={setSelectedFile} />}
     {view === 'worktrees' && <Worktrees repo={repo} />}
-  </main>{mobileOpen && <button className="sidebar-scrim" aria-label="关闭侧栏" onClick={close} />}</div>;
+  </main></div>;
 }
 
 export default function App() {
+  const [theme, setTheme] = useState(readTheme);
+  useEffect(() => { applyTheme(theme); }, [theme]);
   const [chatCwd] = useState(() => new URLSearchParams(window.location.search).get('cwd') || '');
   const [context, setContext] = useState({ state: 'connecting', cwd: chatCwd, root: '' });
   const [repo, setRepo] = useState(null);
@@ -41,7 +56,7 @@ export default function App() {
       const next = await api('repository', { path: source.root }, controller.signal);
       if (controller.signal.aborted) return;
       setRepo(next); setMobileOpen(false);
-    } catch (err) { if (!controller.signal.aborted) { setRepo(null); setContext(previous => ({ ...previous, state: 'error' })); setError(err.name === 'TimeoutError' ? '读取超时，请重试。' : err.message); } }
+    } catch (err) { if (!controller.signal.aborted) { setContext(previous => ({ ...previous, state: 'error' })); setError(err.name === 'TimeoutError' ? '读取超时，请重试。' : err.message); } }
     finally { if (!controller.signal.aborted) setLoading(false); }
   }, [chatCwd]);
   useEffect(() => { loadChat(); return () => pending.current?.abort(); }, [loadChat]);
@@ -56,9 +71,9 @@ export default function App() {
     missing: ['当前聊天的目录不可用', '工作目录可能已移动或删除。请在聊天中重新打开 Git 面板。'],
     error: ['无法读取当前聊天的仓库', '请检查上方错误提示，或点击刷新重试。'],
   }[context.state] || ['正在关联当前聊天…', '正在读取当前聊天的工作目录。'];
-  return <div className="app-shell"><header className="toolbar"><div className="brand"><button className="icon-button mobile-only" aria-label="打开导航" disabled={!repo} onClick={() => setMobileOpen(true)}><Menu size={20} /></button><GitBranch size={27} strokeWidth={1.7} /><span title="mogoo-codex-git">mogoo-codex-git</span></div><div className="chat-location" aria-label="当前聊天目录"><FolderGit2 size={18} /><div><span>{context.state === 'ready' ? `当前聊天 · ${context.isWorktree ? 'Worktree' : '仓库'}` : '当前聊天'}</span><code title={context.root || context.cwd}>{context.root || context.cwd || '由 Codex 聊天入口自动关联'}</code></div></div><button className="refresh-button" disabled={loading || !chatCwd} onClick={loadChat} title="重新读取当前聊天目录，不联网 fetch"><RefreshCw size={16} className={loading ? 'spinning' : ''} /><span>刷新</span></button></header>
-    {error && <div className="error-banner" role="alert"><span>{error}</span><button className="icon-button" aria-label="关闭错误提示" onClick={() => setError('')}><X size={16} /></button></div>}
-    {repo ? <RepositoryWorkspace key={repo.root} repo={repo} mobileOpen={mobileOpen} close={() => setMobileOpen(false)} /> : <main className="welcome"><div className="welcome-symbol"><FolderGit2 size={42} strokeWidth={1.3} /></div><h1>{loading ? '正在关联当前聊天…' : empty[0]}</h1><p>{empty[1]}</p>{context.cwd && <code className="empty-context-path">{context.cwd}</code>}<p className="welcome-note">自动跟随聊天入口 · 不使用其他聊天的历史仓库</p></main>}
-    <footer className="statusbar"><span><ShieldCheck size={14} /><span>只读模式<span className="footer-detail"> · 所有 Git 数据在本机读取</span></span></span><div><label className="auto-refresh"><input type="checkbox" disabled={!repo} checked={auto} onChange={event => setAuto(event.target.checked)} />15 秒自动刷新</label><span>{loading ? '读取中…' : repo ? `最近刷新 ${new Date(repo.refreshedAt).toLocaleTimeString('zh-CN', { hour12: false })}` : '未读取任何仓库'}</span></div></footer>
+  return <div className="app-shell"><header className="toolbar"><span className="project"><Folder />mogoo-codex-git</span>{repo && <span className="branch" title={repo.branch || (repo.head ? '分离的 HEAD' : '尚无提交')}><GitBranch /><span className="branch-name">{repo.branch || (repo.head ? '分离的 HEAD' : '尚无提交')}</span></span>}<code className="toolbar-path" title={context.root || context.cwd}>{context.root || context.cwd}</code><span className="toolbar-actions"><span className="theme-switch" role="group" aria-label="界面主题">{[['light','浅色'],['dark','深色']].map(([id,label]) => <button key={id} className={`theme-${id}`} aria-pressed={theme === id} onClick={() => setTheme(id)}>{label}</button>)}</span><span className="readonly">只读</span><button className="refresh" disabled={loading || !chatCwd} onClick={loadChat} title="重新读取当前聊天目录，不联网 fetch"><RefreshCw className={loading ? 'spinning' : ''} />刷新</button></span></header>
+    {error && <div className="error-banner" role="alert"><span>{error}</span><button className="icon-button" aria-label="关闭错误提示" onClick={() => setError('')}><X /></button></div>}
+    {repo ? <RepositoryWorkspace key={repo.root} repo={repo} mobileOpen={mobileOpen} close={() => setMobileOpen(false)} /> : <main className="welcome"><Folder size={32} /><h1>{loading ? '正在关联当前聊天…' : empty[0]}</h1><p>{empty[1]}</p>{context.cwd && <code>{context.cwd}</code>}</main>}
+    <footer className="footer"><i className="status-dot" /><span title={repo ? `最近刷新 ${new Date(repo.refreshedAt).toLocaleTimeString('zh-CN', {hour12:false})}` : ''}>{loading ? '读取中…' : repo ? '当前聊天仓库' : '未关联仓库'}</span><label className="auto"><input type="checkbox" disabled={!repo} checked={auto} onChange={e => setAuto(e.target.checked)} />15 秒自动刷新</label></footer>
   </div>;
 }

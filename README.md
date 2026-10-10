@@ -6,7 +6,7 @@
 
 A read-only Git panel for Codex. Open the current chat's repository or worktree automatically and explore commits, branches, and file diffs.
 
-![mogoo-codex-git commit history and file diff](docs/images/git-lens-overview.jpg)
+![mogoo-codex-git commit history and file diff](docs/images/mogoo-codex-git-overview.png)
 
 ## Features
 
@@ -14,6 +14,7 @@ A read-only Git panel for Codex. Open the current chat's repository or worktree 
 - Commit details and unified file diffs with line numbers.
 - Separate staged, unstaged, and untracked changes.
 - Worktree overview and optional 15-second auto-refresh.
+- Light and dark themes with remembered preference; compact desktop and narrow-panel layouts.
 - Local-only: no repository uploads or Git write operations.
 
 ## Install

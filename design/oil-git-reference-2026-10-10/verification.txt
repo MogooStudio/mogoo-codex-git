@@ -1,0 +1,5 @@
+Theme interaction checks: runs 1 PASS, 2 PASS, 3 PASS.
+Verified click, keyboard, refresh persistence, four pages, narrow viewport, storage read/write failure, no page errors.
+Artifact validation: eight HD image dimensions and exact gallery embedding PASS. Eight screenshot reports cover sixteen images; no issues or contrast errors.
+Historical JSON longMeasure lint retained; see README.md.
+One screenshot tool temporary-directory cleanup returned EPERM after writing valid worktree images; narrow render completed separately.

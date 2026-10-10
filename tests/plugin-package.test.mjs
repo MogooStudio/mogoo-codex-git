@@ -20,6 +20,7 @@ test('发布包：搬到独立目录后无需源码或 node_modules 即可运行
   await writeFile(path.join(base, 'package.json'), '{"name":"parent-workspace-must-not-install","dependencies":{"git-lens-does-not-exist":"99.0.0"}}');
   await writeFile(path.join(base, 'pnpm-workspace.yaml'), 'packages:\n  - "**"\nverifyDepsBeforeRun: install\n');
   const root = result.pluginRoot;
+  assert.match(await readFile(path.join(root, 'THIRD-PARTY-NOTICES.md'), 'utf8'), /Zhihuang Lin/);
   const manifest = JSON.parse(await readFile(path.join(root, 'plugin.json'), 'utf8'));
   const overlay = JSON.parse(await readFile(path.join(root, '.codex-plugin', 'plugin.json'), 'utf8'));
   const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));

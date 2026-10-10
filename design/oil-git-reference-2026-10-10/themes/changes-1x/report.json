@@ -1,0 +1,18 @@
+[
+  {
+    "file": "light.png",
+    "state": "light",
+    "size": "1600x1000",
+    "zoom": 1,
+    "issues": [],
+    "lint": []
+  },
+  {
+    "file": "dark.png",
+    "state": "dark",
+    "size": "1600x1000",
+    "zoom": 1,
+    "issues": [],
+    "lint": []
+  }
+]

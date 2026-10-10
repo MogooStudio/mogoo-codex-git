@@ -1,0 +1,65 @@
+{
+  "direction": "B · 浅色审阅台",
+  "status": "selected-design",
+  "colors": {
+    "paper": "#ffffff",
+    "wash": "#f6f7fa",
+    "navigationRail": "#f0f2f6",
+    "border": "#dce0e7",
+    "borderSoft": "#eceef2",
+    "text": "#242b3a",
+    "textMuted": "#626d80",
+    "textFaint": "#626d80",
+    "accent": "#4b50b5",
+    "accentSurface": "#ececfa",
+    "addition": "#277653",
+    "additionSurface": "#e9f5ed",
+    "deletion": "#a75156",
+    "deletionSurface": "#fcf0f0",
+    "deletionTokenText": "#893847"
+  },
+  "typography": {
+    "uiFont": [
+      "Segoe UI",
+      "Microsoft YaHei UI",
+      "Microsoft YaHei",
+      "sans-serif"
+    ],
+    "codeFont": [
+      "Consolas",
+      "Microsoft YaHei UI",
+      "Microsoft YaHei",
+      "SFMono-Regular",
+      "monospace"
+    ],
+    "bodyPx": 14,
+    "secondaryPx": 13,
+    "codePx": 13,
+    "lineNumberPx": 11,
+    "codeLineHeightPx": 24
+  },
+  "desktopLayoutPx": {
+    "viewport": [
+      1600,
+      1000
+    ],
+    "brandBarHeight": 51,
+    "repositoryBarHeight": 47,
+    "navigationRailWidth": 76,
+    "historyColumnWidth": 390,
+    "fileColumnWidth": 235,
+    "statusBarHeight": 29
+  },
+  "controls": {
+    "borderWidthPx": 1,
+    "radiusPx": 5,
+    "selectedNavigationRadiusPx": 6,
+    "iconStrokeWidthPx": 1.5,
+    "shadows": "none"
+  },
+  "scope": "静态高清设计稿；这些变量不表示已经修改产品代码。",
+  "notes": [
+    "Code line numbers and metadata can be smaller than body copy; body text and code remain 13-14px.",
+    "Frozen workspace snapshot: 25 untracked design files, 1 worktree, HEAD 6b7e91f."
+  ]
+}

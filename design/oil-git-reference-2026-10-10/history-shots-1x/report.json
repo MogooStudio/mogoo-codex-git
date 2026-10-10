@@ -1,0 +1,34 @@
+[
+  {
+    "file": "page.png",
+    "state": null,
+    "size": "1600x1000",
+    "zoom": 1,
+    "issues": [],
+    "lint": [
+      {
+        "rule": "longMeasure",
+        "label": "正文行太长",
+        "count": 1,
+        "examples": [
+          "span.str「\"本地只读 Git 面板，支持提交关系图、分支和」（每行约 59 字）"
+        ]
+      }
+    ],
+    "compare": {
+      "file": "page-compare.png",
+      "overall": 100,
+      "cells": {
+        "左上": 100,
+        "中上": 100,
+        "右上": 100,
+        "左中": 100,
+        "正中": 100,
+        "右中": 100,
+        "左下": 100,
+        "中下": 100,
+        "右下": 99.9
+      }
+    }
+  }
+]

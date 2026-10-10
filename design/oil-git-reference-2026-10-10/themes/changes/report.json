@@ -1,0 +1,18 @@
+[
+  {
+    "file": "light-@2x.png",
+    "state": "light",
+    "size": "1600x1000",
+    "zoom": 2,
+    "issues": [],
+    "lint": []
+  },
+  {
+    "file": "dark-@2x.png",
+    "state": "dark",
+    "size": "1600x1000",
+    "zoom": 2,
+    "issues": [],
+    "lint": []
+  }
+]

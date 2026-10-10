@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "lang": "zh",
+  "project": "mogoo-codex-git · Oil Git 精简稿",
+  "brief": "四个页面均支持浅色与深色切换。这里展示八张高清原图；实际切换请打开 oil-history.html 等可编辑页面，使用右上角主题控件。",
+  "round": "浅色 / 深色 · 2026-10-10",
+  "candidates": [
+    {
+      "id": "oil-history-light",
+      "name": "提交历史 · 浅色",
+      "concept": "250px 文件栏、紧凑提交列表与完整差异阅读区。文件清单收进单行选择器。",
+      "typography": "Segoe UI / Microsoft YaHei UI；代码 Consolas 13px。",
+      "palette": [
+        "#fafafa",
+        "#f0f0f0",
+        "#383a42",
+        "#407338"
+      ],
+      "traits": [
+        "3200 × 2000 PNG",
+        "真实提交与差异",
+        "单条工具栏"
+      ],
+      "kind": "image",
+      "source": "themes/history/light-@2x.png"
+    },
+    {
+      "id": "oil-history-dark",
+      "name": "提交历史 · 深色",
+      "concept": "250px 文件栏、紧凑提交列表与完整差异阅读区。文件清单收进单行选择器。",
+      "typography": "Segoe UI / Microsoft YaHei UI；代码 Consolas 13px。",
+      "palette": [
+        "#282c34",
+        "#21252b",
+        "#abb2bf",
+        "#98c379"
+      ],
+      "traits": [
+        "3200 × 2000 PNG",
+        "真实提交与差异",
+        "单条工具栏"
+      ],
+      "kind": "image",
+      "source": "themes/history/dark-@2x.png"
+    },
+    {
+      "id": "oil-changes-light",
+      "name": "工作区改动 · 浅色",
+      "concept": "直接从左侧文件列表阅读内容，移除提交列和重复文件标题。",
+      "typography": "Segoe UI / Microsoft YaHei UI；代码 Consolas 13px。",
+      "palette": [
+        "#fafafa",
+        "#f0f0f0",
+        "#383a42",
+        "#407338"
+      ],
+      "traits": [
+        "3200 × 2000 PNG",
+        "未跟踪文件状态",
+        "完整代码阅读区"
+      ],
+      "kind": "image",
+      "source": "themes/changes/light-@2x.png"
+    },
+    {
+      "id": "oil-changes-dark",
+      "name": "工作区改动 · 深色",
+      "concept": "直接从左侧文件列表阅读内容，移除提交列和重复文件标题。",
+      "typography": "Segoe UI / Microsoft YaHei UI；代码 Consolas 13px。",
+      "palette": [
+        "#282c34",
+        "#21252b",
+        "#abb2bf",
+        "#98c379"
+      ],
+      "traits": [
+        "3200 × 2000 PNG",
+        "未跟踪文件状态",
+        "完整代码阅读区"
+      ],
+      "kind": "image",
+      "source": "themes/changes/dark-@2x.png"
+    },
+    {
+      "id": "oil-worktrees-light",
+      "name": "工作树 · 浅色",
+      "concept": "单行表格呈现当前路径、分支、HEAD 与聊天关系，空状态仅保留必要文字。",
+      "typography": "Segoe UI / Microsoft YaHei UI；路径 Consolas。",
+      "palette": [
+        "#fafafa",
+        "#f0f0f0",
+        "#383a42",
+        "#407338"
+      ],
+      "traits": [
+        "3200 × 2000 PNG",
+        "一行工作树",
+        "无统计卡片"
+      ],
+      "kind": "image",
+      "source": "themes/worktrees/light-@2x.png"
+    },
+    {
+      "id": "oil-worktrees-dark",
+      "name": "工作树 · 深色",
+      "concept": "单行表格呈现当前路径、分支、HEAD 与聊天关系，空状态仅保留必要文字。",
+      "typography": "Segoe UI / Microsoft YaHei UI；路径 Consolas。",
+      "palette": [
+        "#282c34",
+        "#21252b",
+        "#abb2bf",
+        "#98c379"
+      ],
+      "traits": [
+        "3200 × 2000 PNG",
+        "一行工作树",
+        "无统计卡片"
+      ],
+      "kind": "image",
+      "source": "themes/worktrees/dark-@2x.png"
+    },
+    {
+      "id": "oil-narrow-light",
+      "name": "窄面板 · 浅色",
+      "concept": "隐藏常驻文件栏，保留提交与差异双列。长代码软换行，差异区域独立滚动。",
+      "typography": "Segoe UI / Microsoft YaHei UI；代码 Consolas 13px。",
+      "palette": [
+        "#fafafa",
+        "#f0f0f0",
+        "#383a42",
+        "#407338"
+      ],
+      "traits": [
+        "1520 × 2000 PNG",
+        "760px 阅读视口",
+        "14 个文件菜单"
+      ],
+      "kind": "image",
+      "source": "themes/narrow/light-@2x.png"
+    },
+    {
+      "id": "oil-narrow-dark",
+      "name": "窄面板 · 深色",
+      "concept": "隐藏常驻文件栏，保留提交与差异双列。长代码软换行，差异区域独立滚动。",
+      "typography": "Segoe UI / Microsoft YaHei UI；代码 Consolas 13px。",
+      "palette": [
+        "#282c34",
+        "#21252b",
+        "#abb2bf",
+        "#98c379"
+      ],
+      "traits": [
+        "1520 × 2000 PNG",
+        "760px 阅读视口",
+        "14 个文件菜单"
+      ],
+      "kind": "image",
+      "source": "themes/narrow/dark-@2x.png"
+    }
+  ]
+}

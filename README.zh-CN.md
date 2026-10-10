@@ -6,7 +6,7 @@
 
 Codex 中的只读 Git 面板。自动打开当前聊天的仓库或 worktree，浏览提交、分支和文件差异。
 
-![mogoo-codex-git 提交记录与文件差异](docs/images/git-lens-overview.jpg)
+![mogoo-codex-git 提交记录与文件差异](docs/images/mogoo-codex-git-overview.png)
 
 ## 功能
 
@@ -14,6 +14,7 @@ Codex 中的只读 Git 面板。自动打开当前聊天的仓库或 worktree，
 - 提交详情与带行号的文件差异。
 - 分组查看已暂存、未暂存和未跟踪改动。
 - 工作树概览，可选每 15 秒自动刷新。
+- 浅色 / 深色切换并记住选择，支持桌面与窄面板布局。
 - 仅在本机读取，不上传仓库、不执行 Git 写操作。
 
 ## 安装

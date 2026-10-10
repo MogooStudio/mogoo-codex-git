@@ -30,7 +30,7 @@ export async function packagePlugin(outputRoot) {
   await writeFile(path.join(pluginRoot, 'pnpm-workspace.yaml'), 'packages:\n  - "."\nverifyDepsBeforeRun: false\n');
   for (const [source, destination] of [
     ['dist', 'dist'], ['server', 'server'], ['codex/skills', 'skills'], ['codex/assets', 'assets'],
-    ['scripts/open-chat.mjs', 'scripts/open-chat.mjs'], ['codex/PLUGIN-README.md', 'README.md'], ['LICENSE', 'LICENSE'],
+    ['scripts/open-chat.mjs', 'scripts/open-chat.mjs'], ['codex/PLUGIN-README.md', 'README.md'], ['LICENSE', 'LICENSE'], ['THIRD-PARTY-NOTICES.md', 'THIRD-PARTY-NOTICES.md'],
   ]) await cp(path.join(root, source), path.join(pluginRoot, destination), { recursive: true });
   const marketplace = {
     name: manifest.name, interface: { displayName: `${manifest.extensions['com.openai'].interface.displayName} 本地插件` },

@@ -1,0 +1,19 @@
+[
+  {
+    "file": "page-@2x.png",
+    "state": null,
+    "size": "1600x1000",
+    "zoom": 2,
+    "issues": [],
+    "lint": [
+      {
+        "rule": "longMeasure",
+        "label": "正文行太长",
+        "count": 1,
+        "examples": [
+          "span.str「\"本地只读 Git 面板，支持提交关系图、分支和」（每行约 59 字）"
+        ]
+      }
+    ]
+  }
+]

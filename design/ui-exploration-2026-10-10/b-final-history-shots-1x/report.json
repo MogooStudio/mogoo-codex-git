@@ -1,0 +1,28 @@
+[
+  {
+    "file": "page.png",
+    "state": null,
+    "size": "1600x1000",
+    "zoom": 1,
+    "issues": [],
+    "lint": [
+      {
+        "rule": "sideStripe",
+        "label": "彩色单侧边线",
+        "count": 2,
+        "examples": [
+          "article.commit.selected「chore: 统一 mogoo-codex-gi」（::after）",
+          "div.file-item.active「codex/plugin.json M」（::before）"
+        ]
+      },
+      {
+        "rule": "longMeasure",
+        "label": "正文行太长",
+        "count": 1,
+        "examples": [
+          "span.str「\"本地只读 Git 面板，支持提交关系图、分支和」（每行约 61 字）"
+        ]
+      }
+    ]
+  }
+]

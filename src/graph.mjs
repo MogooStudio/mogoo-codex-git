@@ -24,5 +24,6 @@ export function layoutGraph(commits) {
     maxLanes = Math.max(maxLanes, before.length, lanes.length, lane + 1);
     return { lane, color, edges };
   });
-  return { rows, width: Math.max(64, maxLanes * 18 + 24) };
+  // Last lane center + halo and text spacing, including the compact layout.
+  return { rows, width: maxLanes * 18 + 19 };
 }

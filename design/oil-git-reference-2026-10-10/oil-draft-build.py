@@ -1,0 +1,22 @@
+from pathlib import Path
+import re, html
+
+root=Path(__file__).resolve().parent
+previous=root.parent/'ui-exploration-2026-10-10'
+history=(previous/'b-final-history.html').read_text(encoding='utf-8')
+changes=(previous/'bs-changes.html').read_text(encoding='utf-8')
+icons=re.search(r'<svg class="icons".*?</svg>',history,re.S).group(0)
+icons=icons.replace('</defs>','<symbol id="right" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol></defs>')
+code=re.search(r'<div class="code">\s*(.*?)\s*</div><div class="code-footer">',history,re.S).group(1)
+file_rows=re.search(r'<div class="root-folder">.*?</div>(.*?)</div><div class="files-foot">',changes,re.S).group(1)
+file_rows=file_rows.replace('file-row','workspace-file').replace('kind','state').replace('>U<','>?<')
+file_rows=file_rows.replace(' selected','')
+file_rows=file_rows.replace('<div class="workspace-file','<button class="workspace-file').replace('</div>','</button>')
+sidebar='''<aside class="sidebar"><h1>源代码管理</h1><div class="group"><svg><use href="#chevron"/></svg>未暂存<span class="count">0</span></div><div class="group"><svg><use href="#chevron"/></svg>已暂存<span class="count">0</span></div><div class="group"><svg><use href="#chevron"/></svg>未跟踪<span class="count">25</span></div><div class="root-folder" title="design/ui-exploration-2026-10-10/"><svg><use href="#folder"/></svg><span>design</span></div>'''+file_rows+'</aside>'
+items=[('chore: 统一 mogoo-codex-git 命名与插件元信息','master ← HEAD'),('docs: 精简双语 README 并添加界面截图',''),('docs: 默认使用英文 README 并增加中文切换与许可证说明',''),('feat: 添加 Codex 只读 Git 可视化插件',''),('Initial commit','')]
+commits=''.join('<button class="commit'+(' active' if i==0 else '')+'"><span class="graph"><i class="node"></i></span><span><span class="commit-title">'+html.escape(title)+'</span>'+('<span class="commit-ref">'+html.escape(ref)+'</span>' if ref else '')+'</span></button>' for i,(title,ref) in enumerate(items))
+file_items=re.findall(r'<div class="file-item(?: active)?" title="([^"]+)"',history)
+menu='<details class="file-menu"><summary class="file-select"><svg><use href="#code"/></svg><span class="path">codex/plugin.json</span><span class="position">4 / 14 · 修改</span><svg><use href="#chevron"/></svg></summary><div class="file-menu-list">'+''.join('<button class="'+('selected' if f=='codex/plugin.json' else '')+'"><svg><use href="#file"/></svg><span class="name">'+html.escape(f)+'</span><span class="state">M</span></button>' for f in file_items)+'</div></details>'
+document='''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>mogoo-codex-git · Oil Git 精简稿</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%23407338'/%3E%3C/svg%3E"><link rel="stylesheet" href="oil-simple.css"></head><body>'''+icons+'''<div class="app"><header class="toolbar"><span class="project"><svg><use href="#folder"/></svg>mogoo-codex-git</span><span class="branch"><svg><use href="#branch"/></svg>master</span><span class="toolbar-path">E:\\mogoo\\workspace\\codex\\mogoo-codex-git</span><span class="toolbar-actions"><span class="readonly">只读</span><button class="refresh"><svg><use href="#refresh"/></svg>刷新</button></span></header><div class="workspace">'''+sidebar+'''<main class="main"><nav class="tabs"><button><svg><use href="#code"/></svg>改动</button><button class="active"><svg><use href="#branch"/></svg>历史</button><button><svg><use href="#tree"/></svg>工作树</button></nav><div class="history-content"><section class="log"><div class="log-tools"><button class="scope">全部提交<svg><use href="#chevron"/></svg></button><span>5 条</span></div><label class="search"><svg><use href="#search"/></svg><input placeholder="搜索提交、作者或哈希" aria-label="搜索已加载的提交"></label><div class="commits">'''+commits+'''</div></section><section class="details"><h2 class="detail-heading">chore: 统一 mogoo-codex-git 命名与插件元信息</h2><div class="comparison"><button class="copy-sha"><svg><use href="#copy"/></svg>6b7e91f</button><span>超级大蘑菇头</span><span>2026/10/10 11:23</span><span>·</span><span>14 个文件</span></div>'''+menu+'''<div class="patch"><div class="hunk">@@ -1,14 +1,18 @@</div><div class="code">'''+code+'''</div></div></section></div></main></div><footer class="footer"><span class="status-dot"></span><span>当前聊天仓库</span><label class="auto"><input type="checkbox">15 秒自动刷新</label></footer></div></body></html>'''
+(root/'oil-history.html').write_text(document,encoding='utf-8')
+print('Created oil-history.html')
