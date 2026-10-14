@@ -6,5 +6,5 @@ dist/
 *.log
 release/
 
-# 真实仓库的本机验证截图，包含其他项目的提交和代码内容。
-design/desktop.png
+# 本地设计资料和验证截图。
+/design/
