@@ -1,0 +1,132 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import os from 'node:os';
+import http from 'node:http';
+import { pathToFileURL } from 'node:url';
+import { execFile, execFileSync } from 'node:child_process';
+import { promisify } from 'node:util';
+import { mkdtemp, realpath, readdir, readFile, access, mkdir, rm, writeFile } from 'node:fs/promises';
+import { packagePlugin } from '../scripts/package-plugin.mjs';
+
+test('发布包：搬到独立目录后无需源码或 node_modules 即可运行，清单和聊天绑定保持有效', async t => {
+  const base = await realpath(await mkdtemp(path.join(os.tmpdir(), 'git-lens-package-')));
+  t.after(async () => {
+    assert.equal(path.dirname(base), await realpath(os.tmpdir()));
+    assert.ok(path.basename(base).startsWith('git-lens-package-'));
+    await rm(base, { recursive: true, force: true });
+  });
+  const result = await packagePlugin(path.join(base, '独立 分发目录'));
+  await writeFile(path.join(base, 'package.json'), '{"name":"parent-workspace-must-not-install","dependencies":{"git-lens-does-not-exist":"99.0.0"}}');
+  await writeFile(path.join(base, 'pnpm-workspace.yaml'), 'packages:\n  - "**"\nverifyDepsBeforeRun: install\n');
+  const root = result.pluginRoot;
+  assert.match(await readFile(path.join(root, 'THIRD-PARTY-NOTICES.md'), 'utf8'), /Zhihuang Lin/);
+  const manifest = JSON.parse(await readFile(path.join(root, 'plugin.json'), 'utf8'));
+  const overlay = JSON.parse(await readFile(path.join(root, '.codex-plugin', 'plugin.json'), 'utf8'));
+  const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
+  assert.equal(manifest.name, 'mogoo-codex-git');
+  assert.equal(pkg.name, manifest.name);
+  assert.equal(overlay.name, manifest.name);
+  assert.equal(manifest.author.name, 'mogoo');
+  assert.deepEqual(overlay.author, manifest.author);
+  assert.equal(pkg.author, manifest.author.name);
+  assert.equal(manifest.homepage, 'https://github.com/MogooStudio/mogoo-codex-git');
+  assert.equal(manifest.repository, manifest.homepage);
+  assert.equal(pkg.repository.url, `${manifest.repository}.git`);
+  assert.equal(overlay.homepage, manifest.homepage);
+  assert.equal(pkg.homepage, manifest.homepage);
+  assert.equal(overlay.repository, manifest.repository);
+  assert.equal(overlay.license, manifest.license);
+  assert.equal(manifest.extensions['com.openai'].interface.displayName, 'Mogoo Codex Git');
+  assert.equal(manifest.extensions['com.openai'].interface.developerName, manifest.author.name);
+  assert.equal(manifest.extensions['com.openai'].interface.websiteURL, manifest.homepage);
+  assert.deepEqual(overlay.interface, manifest.extensions['com.openai'].interface);
+  const marketplace = JSON.parse(await readFile(path.join(result.marketplaceRoot, '.agents', 'plugins', 'marketplace.json'), 'utf8'));
+  assert.equal(marketplace.name, manifest.name);
+  assert.equal(marketplace.plugins[0].name, manifest.name);
+  assert.equal(path.resolve(result.marketplaceRoot, marketplace.plugins[0].source.path), root);
+  assert.equal(manifest.version, pkg.version);
+  assert.equal(overlay.version, pkg.version);
+  assert.equal(overlay.skills, './skills/');
+  const mcp = JSON.parse(await readFile(path.join(root, overlay.mcpServers), 'utf8'));
+  const mcpEntry = mcp.mcpServers[manifest.name];
+  assert.equal(mcpEntry.command, 'node');
+  const portable = JSON.parse(await readFile(path.join(root, 'mcp.json'), 'utf8')).mcpServers[manifest.name];
+  assert.equal(portable.type, 'stdio');
+  assert.equal(portable.command, mcpEntry.command);
+  assert.equal(path.resolve(root, portable.cwd, ...portable.args), path.resolve(root, mcpEntry.cwd, ...mcpEntry.args));
+  const mcpPath = path.resolve(root, mcpEntry.cwd, ...mcpEntry.args);
+  const { createPanelHandler } = await import(pathToFileURL(mcpPath).href);
+  const handle = createPanelHandler();
+  const { tools } = await handle('tools/list');
+  const panel = tools.find(item => item.name === 'git_panel');
+  assert.deepEqual(panel._meta['openai/ui'].entrypoints, [{ type: 'thread' }]);
+  const updater = tools.find(item => item.name === 'git_panel_update');
+  assert.deepEqual(updater._meta.ui.visibility, ['app']);
+  const updateStatus = await handle('tools/call', {
+    name: updater.name, arguments: { action: 'status' },
+    _meta: { threadId: '00000000-0000-4000-8000-000000000001' },
+  });
+  assert.equal(updateStatus.structuredContent.running, pkg.version);
+  assert.equal(updateStatus.structuredContent.changelog, 'https://github.com/MogooStudio/mogoo-codex-git/blob/main/CHANGELOG.zh.md');
+  assert.equal(updateStatus.structuredContent.canInstall, false);
+  const { contents: [app] } = await handle('resources/read', { uri: panel._meta.ui.resourceUri });
+  assert.equal(app.mimeType, 'text/html;profile=mcp-app');
+  assert.match(app.text, /<html data-mcp-app /);
+  assert.doesNotMatch(app.text, /(?:src|href)="\/assets\//);
+  assert.equal(pkg.dependencies, undefined);
+  await assert.rejects(() => access(path.join(root, 'node_modules')));
+  await assert.rejects(() => access(path.join(root, 'src')));
+  const files = await readdir(root, { recursive: true });
+  for (const file of files.filter(file => /\.(mjs|md|json|js)$/.test(file))) {
+    const text = await readFile(path.join(root, file), 'utf8');
+    assert.doesNotMatch(text, /F:[\\/]mogoo[\\/]workspace|C:[\\/]Users[\\/]Administrator/, file);
+  }
+  const checkout = path.join(base, '调用方 仓库');
+  await mkdir(checkout);
+  execFileSync('git', ['init', '-b', 'main'], { cwd: checkout, windowsHide: true, stdio: 'ignore' });
+  const packagedServer = await import(pathToFileURL(path.join(root, 'server', 'index.mjs')).href);
+  const packagedLauncher = await import(pathToFileURL(path.join(root, 'scripts', 'open-chat.mjs')).href);
+  const server = await packagedServer.createServer();
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const port = server.address().port;
+  const launched = await packagedLauncher.openChat({ cwd: checkout, port });
+  assert.equal(launched.state, 'ready');
+  assert.equal(launched.root, checkout);
+  assert.equal(launched.serviceReused, true);
+  assert.equal(new URL(launched.url).searchParams.get('cwd'), checkout);
+  const token = new URL(launched.url).searchParams.get('token');
+  assert.match(token, /^[A-Za-z0-9_-]{43}$/);
+  const response = await fetch(launched.url);
+  assert.equal(response.status, 200);
+  assert.match(await response.text(), /mogoo-codex-git/);
+  const health = await (await fetch(`http://127.0.0.1:${port}/api/health`, { headers: { 'X-Git-Lens': '1', 'X-Git-Lens-Token': token } })).json();
+  assert.equal(health.instance, packagedLauncher.instanceId);
+  const browserInstall = await fetch(`http://127.0.0.1:${port}/api/update?action=install`, { headers: { 'X-Git-Lens': '1', 'X-Git-Lens-Token': token } });
+  assert.equal(browserInstall.status, 403);
+  // The documented skill entry runs with Node alone; pnpm is a developer tool.
+  const { stdout: nodeOutput } = await promisify(execFile)(process.execPath, [path.join(root, 'scripts', 'open-chat.mjs'), '--cwd', checkout, '--port', String(port)], {
+    cwd: base, windowsHide: true, timeout: 15000,
+  });
+  assert.equal(JSON.parse(nodeOutput.trim()).root, checkout);
+  const skill = await readFile(path.join(root, 'skills', 'git-lens', 'SKILL.md'), 'utf8');
+  assert.match(skill, /node \(Join-Path \$taskPluginRoot 'scripts\/open-chat\.mjs'\)/);
+  const pnpmCli = process.env.npm_execpath;
+  await t.test('真实 pnpm 可从独立发布包运行 open:chat', { skip: pnpmCli ? false : '裸 node --test 未提供 npm_execpath，跳过真实 pnpm 回归检查' }, async () => {
+    const [pnpmExecutable, ...pnpmArgs] = path.extname(pnpmCli).toLowerCase() === '.exe'
+      ? [pnpmCli]
+      : [process.execPath, pnpmCli];
+    const { stdout } = await promisify(execFile)(pnpmExecutable, [...pnpmArgs, '--silent', '--dir', root, 'open:chat', '--cwd', checkout, '--port', String(port)], {
+      cwd: base, windowsHide: true, timeout: 15000,
+    });
+    assert.equal(JSON.parse(stdout.trim()).root, checkout);
+  });
+  await assert.rejects(() => access(path.join(base, 'pnpm-lock.yaml')));
+  await assert.rejects(() => access(path.join(root, 'node_modules')));
+  const other = http.createServer((req, res) => { res.setHeader('Content-Type', 'application/json'); res.end('{"app":"other-service"}'); });
+  await new Promise(resolve => other.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => other.close(resolve)));
+  await assert.rejects(() => packagedLauncher.openChat({ cwd: checkout, port: other.address().port }), /占用/);
+  assert.equal((await fetch(`http://127.0.0.1:${other.address().port}`)).status, 200);
+});

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "mogoo-codex-git": {
+      "command": "node",
+      "args": ["./server/git-panel.mjs"],
+      "cwd": "."
+    }
+  }
+}

@@ -1,0 +1,75 @@
+# mogoo-codex-git · Codex 插件
+
+作者：**mogoo** · 网站：[mogoo-codex-git](https://github.com/MogooStudio/mogoo-codex-git)
+
+自动打开当前 Codex 聊天仓库或 worktree 的本地只读 Git 面板。包含提交关系图、分支与标签、工作区改动、文件差异及工作树信息。
+
+## 安装
+
+需要支持 `codex plugin` 命令的 Codex、Node.js 22.12+ 和 Git。插件内置已构建网页和服务，不需要 pnpm 或安装前端依赖。当前支持在 Windows 本机使用；其他平台未完成运行验证。
+
+从 GitHub 单仓库安装：
+
+```powershell
+codex plugin marketplace add https://github.com/MogooStudio/mogoo-codex-git.git --ref main --json
+codex plugin add mogoo-codex-git@mogoo-codex-git --json
+codex plugin list --marketplace mogoo-codex-git --json
+```
+
+Agent 收到安装请求时，先核对 `codex plugin --help`、`node --version` 和 `git --version`。核对市场来源为 `https://github.com/MogooStudio/mogoo-codex-git.git`。执行上述命令后检查安装结果；不要把开发目录里的 `codex/skills/` 单独当成完整插件安装。
+
+解压发布包，在包含 `.agents/plugins/marketplace.json` 的目录执行：
+
+```powershell
+codex plugin marketplace add . --json
+codex plugin add mogoo-codex-git@mogoo-codex-git --json
+codex plugin list --marketplace mogoo-codex-git --json
+```
+
+这是自定义插件市场安装，不会发布到公共插件目录。Codex 使用安装缓存中的完整副本运行插件。使用本地发布包安装时，保留解压目录作为后续更新来源；GitHub 安装直接从同一仓库获取更新。移动或移除开发源码不影响已安装副本运行。
+
+## 使用
+
+在对应项目的聊天右侧点击「Git 面板」，或在聊天里说“打开 Git 面板”。面板根据当前聊天自动识别仓库或 worktree，无需填写路径。缺少原生入口时，聊天指令仍可通过内置浏览器打开面板。
+
+点击右上角工具栏的「浏览器打开」图标，可在 Codex 右侧内置浏览器打开当前聊天仓库的 Git 网页面板。插件在点击时核对仓库或 worktree，再通过 Codex 的浏览器专用入口打开完整绑定链接，无需修改「本地 URL 打开目标」设置。网页打开时继承原生面板的主题模式和当前颜色，避免网页旧偏好导致颜色不一致；选择「跟随」后继续响应浏览器的系统主题变化。网页固定绑定打开时的仓库，支持浏览、自动刷新和复制指令；填入草稿及直接发送继续使用原生 Git 面板。
+
+原生面板默认跟随 Codex 主题。可以在工具栏手动选择浅色或深色，点击「跟随」恢复自动切换。
+
+「源码」按文件查看工作区差异，可打开文件历史并查看已提交行的归属。「分支」用于筛选本地分支、远程跟踪分支和标签。「工作树」列出同一仓库的检出目录，「Stash」用于预览暂存快照。面板可见时默认每 15 秒更新本地状态。
+
+点击右上角「Git 指令」图标可以选择六条常用 Git 消息。新建分支指令需要填任务名，合并指令需要填分支名。核对预览后可将文本填入当前聊天草稿或发送给 AI，浏览器入口也可以复制文本。点击「直接发送」后，按钮会变为提示色的「确认发送」，再次点击才提交消息。
+
+若当前聊天尚未加载新插件，开启新聊天；插件列表仍未更新时重新启动 Codex。聊天切换工作目录或 handoff 后，再从对应聊天调用入口，面板会使用新的路径。插件不会在后台追踪任意聊天切换。
+
+无 Git 仓库时显示明确提示，不回退到其他仓库、不执行 Git init。
+
+原生入口通过本机 MCP 读取 Git 数据。浏览器入口在本机 4317–4326 端口中复用同一安装版本的服务或选择空闲端口，可通过 `GIT_LENS_PORT` 指定端口。服务只监听 `127.0.0.1`，可由其他聊天复用；启动链接携带当前安装的随机令牌，本地 HTTP 接口只接受令牌匹配的面板请求。
+
+## 卸载
+
+```powershell
+codex plugin remove mogoo-codex-git@mogoo-codex-git --json
+codex plugin marketplace remove mogoo-codex-git --json
+```
+
+## 更新
+
+在 Git 面板底栏点击版本号打开「插件更新」，查看运行中、已安装、市场快照和远端版本。自动检查默认开启，打开面板时最多每 6 小时读取一次 GitHub 仓库的版本标签。检查失败后保留一小时冷却，也可在弹窗中关闭自动检查或手动检查。版本检查只读取公开标签。
+
+从上述 GitHub 仓库安装的 Codex 面板支持「立即更新」。确认命令后，插件会重新核对安装状态，并通过 Codex 更新市场及插件。底栏显示「等待生效」时，新开聊天或重启 Codex 加载新版。
+
+浏览器或开发安装可在面板中查看版本和复制命令。GitHub 安装也可以在终端执行：
+
+```powershell
+codex plugin marketplace upgrade mogoo-codex-git --json
+codex plugin add mogoo-codex-git@mogoo-codex-git --json
+```
+
+更新后新开聊天或重启 Codex，加载新版插件。
+
+## Git 浏览、消息与网络
+
+Git 浏览在本机完成，浏览接口不修改仓库、不上传仓库内容。Git 指令是交给 Codex 的消息，后续 AI 操作可能修改仓库。安装、更新和版本检查需要联网，自动版本检查可在设置中关闭。此说明不扩大为对整个 Codex / AI 平台的数据承诺。
+
+项目原创代码采用 MIT 许可；第三方组件保留各自许可和版权，完整说明随包包含在 `THIRD-PARTY-NOTICES.md`。

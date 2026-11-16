@@ -1,0 +1,18 @@
+node_modules/
+dist/
+!plugins/mogoo-codex-git/dist/
+!plugins/mogoo-codex-git/dist/**
+.runtime/
+*.log
+release/
+
+# 本地设计资料和验证截图。
+/design/
+
+# Local configuration, recovery worktrees and runtime tokens.
+/.cindy-worktrees/
+/.codex/
+/.env
+/.env.*
+!/.env.example
+*.token

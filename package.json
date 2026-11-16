@@ -1,0 +1,26 @@
+{
+  "name": "mogoo-codex-git",
+  "version": "0.1.20",
+  "private": true,
+  "license": "MIT",
+  "author": "mogoo",
+  "homepage": "https://github.com/MogooStudio/mogoo-codex-git",
+  "repository": { "type": "git", "url": "https://github.com/MogooStudio/mogoo-codex-git.git" },
+  "type": "module",
+  "packageManager": "pnpm@11.9.0",
+  "engines": { "node": ">=22.12" },
+  "scripts": {
+    "dev": "node server/index.mjs --dev",
+    "build": "vite build",
+    "start": "node server/index.mjs",
+    "open:chat": "node scripts/open-chat.mjs",
+    "plugin:build": "pnpm build && node scripts/package-plugin.mjs",
+    "marketplace:sync": "pnpm build && node scripts/sync-marketplace.mjs",
+    "marketplace:check": "node scripts/sync-marketplace.mjs --check",
+    "test": "node --test tests/*.test.mjs",
+    "test:core": "node --test tests/diff.test.mjs tests/plugin-package.test.mjs",
+    "check": "pnpm build && pnpm test && pnpm marketplace:check"
+  },
+  "dependencies": { "react": "^19.2.0", "react-dom": "^19.2.0", "lucide-react": "^0.468.0" },
+  "devDependencies": { "vite": "^7.1.0" }
+}
