@@ -32,7 +32,7 @@ codex plugin add mogoo-codex-git@mogoo-codex-git --json
 codex plugin list --marketplace mogoo-codex-git --json
 ```
 
-This uses a custom plugin marketplace. `MogooStudio/mogoo-codex-git` contains the source and the prebuilt plugin; installation and updates use this same GitHub repository. End users do not need to build the source. See the [plugin guide (Chinese)](codex/PLUGIN-README.md) for usage, updates, and removal.
+The repository is currently private; installation requires Git access to it. This uses a custom plugin marketplace. `MogooStudio/mogoo-codex-git` contains the source and the prebuilt plugin; installation and updates use this same GitHub repository. End users do not need to build the source. See the [plugin guide (Chinese)](codex/PLUGIN-README.md) for usage, updates, and removal.
 
 ## First use
 
@@ -55,7 +55,7 @@ After switching chats or worktrees, open the panel from the corresponding chat. 
 
 Repository data is read locally. The browsing APIs do not stage, commit, switch branches, fetch, push, or upload repository contents. Git request templates are passed to Codex, which may then modify the repository according to the request.
 
-Installation, updates, and version checks use the network. Automatic checks read public GitHub release tags and can be disabled in the update settings. These statements describe the plugin, not the data handling of the entire Codex or AI platform.
+Installation, updates, and version checks use the network. Automatic checks read GitHub release tags and can be disabled in the update settings. For a private repository, the plugin falls back to a read-only Git tag query using existing Git credentials. Background checks do not prompt for login or store credentials in the plugin. These statements describe the plugin, not the data handling of the entire Codex or AI platform.
 
 - Remote status uses local remote-tracking references; browsing does not fetch.
 - Search covers loaded history, up to 2,000 commits. Large diffs and untracked-file previews are limited.

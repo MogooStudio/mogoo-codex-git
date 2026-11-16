@@ -32,7 +32,7 @@ codex plugin add mogoo-codex-git@mogoo-codex-git --json
 codex plugin list --marketplace mogoo-codex-git --json
 ```
 
-这是自定义插件市场安装。`MogooStudio/mogoo-codex-git` 同时保存源码和构建好的插件，安装与更新使用同一个 GitHub 仓库。使用者无需构建源码。使用、更新和卸载见[插件说明](codex/PLUGIN-README.md)。
+仓库目前为私有，安装需要已有的 Git 访问权限。这是自定义插件市场安装。`MogooStudio/mogoo-codex-git` 同时保存源码和构建好的插件，安装与更新使用同一个 GitHub 仓库。使用者无需构建源码。使用、更新和卸载见[插件说明](codex/PLUGIN-README.md)。
 
 ## 第一次使用
 
@@ -55,7 +55,7 @@ codex plugin list --marketplace mogoo-codex-git --json
 
 Git 浏览数据在本机读取。插件的浏览接口不会暂存、提交、切换分支、fetch 或推送，也不会上传仓库内容。「Git 指令」会把你选择的请求交给 Codex，后续处理可能修改仓库。
 
-安装、更新和版本检查需要联网。自动检查读取 GitHub 的公开发行标签，可以在插件更新设置中关闭。以上说明针对插件自身，不扩大为对 Codex / AI 平台整体数据行为的承诺。
+安装、更新和版本检查需要联网。自动检查读取 GitHub 发行标签，可以在插件更新设置中关闭。私有仓库会通过 Git 已配置的凭据只读查询标签；后台检查不弹出登录提示，也不在插件中存储凭据。以上说明针对插件自身，不扩大为对 Codex / AI 平台整体数据行为的承诺。
 
 - 远程状态来自本机远程跟踪引用，查看面板不会自动 fetch。
 - 搜索覆盖已加载历史，最多 2,000 条提交；大文件差异和未跟踪文件预览有大小限制。

@@ -42,13 +42,35 @@ export function latestTag(data) {
   return latest;
 }
 
-async function fetchLatest() {
-  const response = await fetch(`${source}/info/refs?service=git-upload-pack`, {
+export async function fetchLatest({ request = fetch, runGit = exec } = {}) {
+  const response = await request(`${source}/info/refs?service=git-upload-pack`, {
     redirect: 'error', signal: AbortSignal.timeout(10000),
     headers: { Accept: 'application/x-git-upload-pack-advertisement' },
   });
   if (!response.ok || !response.headers.get('content-type')?.startsWith('application/x-git-upload-pack-advertisement')) {
     await response.body?.cancel();
+    // Private GitHub repositories hide their refs from anonymous HTTP requests.
+    // Delegate authentication to Git's existing credential helper; never read or
+    // persist credentials in the plugin, and never prompt during a background check.
+    if ([401, 403, 404].includes(response.status)) {
+      try {
+        const { stdout } = await runGit('git', ['ls-remote', '--tags', '--refs', '--', source], {
+          cwd: project,
+          env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: '0' },
+          windowsHide: true, timeout: 10000, maxBuffer: 1024 * 1024,
+        });
+        if (typeof stdout !== 'string' || Buffer.byteLength(stdout) > 1024 * 1024) throw new Error('Invalid refs');
+        let latest = null;
+        for (const line of stdout.split(/\r?\n/)) {
+          const tag = line.match(/^(?:[0-9a-f]{40}|[0-9a-f]{64})\trefs\/tags\/v([0-9.]+)$/i);
+          latest = newest(latest, versionOf(tag?.[1]));
+        }
+        return latest;
+      } catch {
+        // Git/helper stderr can contain local paths or authentication details.
+        throw new Error('Release source unavailable');
+      }
+    }
     throw new Error('Release source unavailable');
   }
   const chunks = [];
@@ -184,6 +206,7 @@ export function createPluginUpdater({
   async function check(force) {
     if (!force && (await readState(file('auto')))?.enabled === false) return;
     const due = remote => {
+      if (remote?.checkedWith !== running) return true;
       const failed = remote?.status === 'unavailable';
       const age = Date.now() - (remote?.checkedAt ?? 0);
       return (!failed && force) || !Number.isFinite(age) || age < 0 || age >= (failed ? hour : 6 * hour);
@@ -198,7 +221,7 @@ export function createPluginUpdater({
       const remote = await Promise.resolve().then(readLatest)
         .then(value => ({ latest: versionOf(value), status: 'ok' }),
           () => ({ latest: versionOf(previous?.latest), status: 'unavailable' }));
-      await writeState(file('remote'), { ...remote, checkedAt: Date.now() });
+      await writeState(file('remote'), { ...remote, checkedAt: Date.now(), checkedWith: running });
     } finally { await release(); }
   }
 

@@ -8,7 +8,7 @@
 
 需要支持 `codex plugin` 命令的 Codex、Node.js 22.12+ 和 Git。插件内置已构建网页和服务，不需要 pnpm 或安装前端依赖。当前支持在 Windows 本机使用；其他平台未完成运行验证。
 
-从 GitHub 单仓库安装：
+仓库当前保持私有，先确保本机 Git 已获得访问权限，再从 GitHub 单仓库安装：
 
 ```powershell
 codex plugin marketplace add https://github.com/MogooStudio/mogoo-codex-git.git --ref main --json
@@ -55,7 +55,7 @@ codex plugin marketplace remove mogoo-codex-git --json
 
 ## 更新
 
-在 Git 面板底栏点击版本号打开「插件更新」，查看运行中、已安装、市场快照和远端版本。自动检查默认开启，打开面板时最多每 6 小时读取一次 GitHub 仓库的版本标签。检查失败后保留一小时冷却，也可在弹窗中关闭自动检查或手动检查。版本检查只读取公开标签。
+在 Git 面板底栏点击版本号打开「插件更新」，查看运行中、已安装、市场快照和远端版本。自动检查默认开启，打开面板时最多每 6 小时读取一次 GitHub 仓库的版本标签。检查失败后保留一小时冷却，也可在弹窗中关闭自动检查或手动检查。版本检查只读取标签；私有仓库复用 Git 已配置的凭据，后台检查不弹出登录提示，也不在插件中存储凭据。
 
 从上述 GitHub 仓库安装的 Codex 面板支持「立即更新」。确认命令后，插件会重新核对安装状态，并通过 Codex 更新市场及插件。底栏显示「等待生效」时，新开聊天或重启 Codex 加载新版。
 

@@ -11,7 +11,7 @@ Source preparation and publication are separate steps. This source snapshot does
 5. Review third-party notices and screenshot provenance. Use only the demo assets described in [media notes](media/README.md).
 6. Build into a new, unused directory with `node scripts/package-plugin.mjs --output <new-directory>` after `pnpm build`.
 
-The current v0.1.20 candidate includes documentation, media, notice, and GitHub source-configuration changes that have not been released. Do not overwrite an existing release tag or silently replace a public v0.1.20 package with different bytes; choose the release version when publication is authorized.
+The GitHub repository is currently private. v0.1.20 is the reviewed installation baseline; v0.1.21 adds authenticated tag checks for private repositories. Keep existing tags immutable and choose a new version for subsequent changes. Publishing a tag in this private repository does not make the source public.
 
 ## One GitHub repository
 
@@ -28,6 +28,6 @@ The updater checks stable `vMAJOR.MINOR.PATCH` Git tags, while the documented ma
 
 GitHub Releases can hold the standalone package generated above. GitHub Pages can serve `main:/docs`; `docs/.nojekyll` preserves the static-site layout. Neither feature requires a second repository.
 
-For this clean-source candidate, initialize a new history only when the intended public author identity is confirmed. Do not copy an old `.git` directory or push local recovery/checkpoint references.
+This repository starts from the reviewed clean-source snapshot with a new history. Do not import an old `.git` directory or push local recovery/checkpoint references.
 
 Publication, repository visibility changes, release tags, and GitHub Pages deployment require a separate explicit publishing step. This document does not prove any deployment has occurred.

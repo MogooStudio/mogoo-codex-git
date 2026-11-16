@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promi
 import os from 'node:os';
 import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { createPluginUpdater, latestTag } from '../server/plugin-update.mjs';
+import { createPluginUpdater, fetchLatest, latestTag } from '../server/plugin-update.mjs';
 
 const { name, version, repository } = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 const [major, minor, patch] = version.split('.').map(Number);
@@ -63,6 +63,64 @@ test('跨面板共用检查缓存和开关，手动检查尊重失败冷却', as
   assert.equal((await b({ action: 'check' })).remoteStatus, 'unavailable');
   assert.equal((await a({ action: 'check' })).latest, next);
   assert.equal(checks, 2);
+});
+
+test('私有发行源仅在 HTTP 拒绝访问时通过无交互 Git 凭据读取稳定标签', async () => {
+  for (const status of [401, 403, 404]) {
+    const response = new Response('authentication required', { status });
+    let calls = 0;
+    const result = await fetchLatest({
+      request: async () => response,
+      runGit: async (command, args, options) => {
+        calls++;
+        assert.equal(response.bodyUsed, true);
+        assert.equal(command, 'git');
+        assert.deepEqual(args, ['ls-remote', '--tags', '--refs', '--', repository.url]);
+        assert.equal(options.env.GIT_TERMINAL_PROMPT, '0');
+        assert.equal(options.env.GCM_INTERACTIVE, '0');
+        assert.equal(options.windowsHide, true);
+        assert.equal(options.timeout, 10000);
+        assert.equal(options.maxBuffer, 1024 * 1024);
+        return { stdout: ['v0.1.9', 'v0.1.10', 'v0.2.0-rc.1', 'v0.3.0^{}', 'v00.4.0']
+          .map(tag => `${'b'.repeat(40)}\trefs/tags/${tag}`).join('\r\n') + '\r\n' };
+      },
+    });
+    assert.equal(result, '0.1.10');
+    assert.equal(calls, 1);
+  }
+  await assert.rejects(fetchLatest({
+    request: async () => new Response('unavailable', { status: 503 }),
+    runGit: async () => assert.fail('HTTP service failures must not invoke Git'),
+  }), /Release source unavailable/);
+});
+
+test('私有源凭据失败或超大标签响应只返回通用错误，不暴露 Git 输出', async () => {
+  for (const runGit of [
+    async () => { throw new Error('credential-helper-private-diagnostic'); },
+    async () => ({ stdout: 'a'.repeat(1024 * 1024 + 1) }),
+  ]) {
+    await assert.rejects(fetchLatest({ request: async () => new Response('', { status: 404 }), runGit }), error => {
+      assert.equal(error.message, 'Release source unavailable');
+      assert.equal(error.cause, undefined);
+      return true;
+    });
+  }
+});
+
+test('升级后不沿用旧版版本检查的失败冷却', async t => {
+  const { home } = await fixture(t);
+  const state = path.join(home, 'mogoo-codex-git', 'update');
+  await mkdir(state, { recursive: true });
+  await writeFile(path.join(state, 'remote.json'), JSON.stringify({
+    latest: null, status: 'unavailable', checkedAt: Date.now(), checkedWith: '0.0.0',
+  }));
+  let checks = 0;
+  const update = createPluginUpdater({ home, readLatest: async () => { checks++; return next; } });
+  const result = await update({ action: 'check' });
+  assert.equal(result.remoteStatus, 'ok');
+  assert.equal(result.latest, next);
+  assert.equal(checks, 1);
+  assert.equal(JSON.parse(await readFile(path.join(state, 'remote.json'), 'utf8')).checkedWith, version);
 });
 
 async function afterInstall(update) {
