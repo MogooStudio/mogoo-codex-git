@@ -178,6 +178,7 @@
 :root[data-git-theme=dark] .git-command-popover{color-scheme:dark;box-shadow:0 12px 30px #0007}
 .git-command-heading{display:flex;align-items:center;gap:8px;margin:0 2px 7px}
 .git-command-heading h2{font-size:14px;margin:0}
+.git-command-description{margin:0 2px 8px;color:var(--muted);font-size:12px}
 .git-command-option{display:flex;align-items:center;width:100%;min-height:33px;gap:9px;padding:4px 7px;border-radius:4px;text-align:left}
 .git-command-option:hover{background:var(--menu-selected)}
 .git-command-option[aria-pressed=true]{background:var(--selected);color:var(--menu-accent)}
