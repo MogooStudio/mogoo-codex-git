@@ -53,7 +53,7 @@ async function sharedFixture(t) {
   return { ...result, catalog, saveCatalog, listing };
 }
 
-test('统一市场通过 git-subdir 更新 Git，忽略旧市场缓存，命令不安装同市场的其他插件', async t => {
+test('统一市场直接更新 Git，不刷新可能被 Next 锁定的缓存，也不安装其他插件', async t => {
   const { home, projectRoot, installed, listing } = await sharedFixture(t);
   const legacy = path.join(home, 'plugins', 'cache', name, name, later, '.codex-plugin');
   await mkdir(legacy, { recursive: true });
@@ -61,6 +61,7 @@ test('统一市场通过 git-subdir 更新 Git，忽略旧市场缓存，命令�
   const commands = [];
   const update = createPluginUpdater({ home, projectRoot, readLatest: async () => next, runCodex: async args => {
     if (args[2] === 'list') return JSON.stringify(listing);
+    assert.notEqual(args[2], 'upgrade', 'Refreshing the shared market can fail on a locked Next cache');
     commands.push(args);
     if (args[1] === 'add') await installed(next);
     return '';
@@ -70,7 +71,6 @@ test('统一市场通过 git-subdir 更新 Git，忽略旧市场缓存，命令�
   assert.equal(checked.snapshot, null);
   assert.equal(checked.canInstall, true);
   assert.deepEqual(checked.commands, [
-    'codex plugin marketplace upgrade mogoo-codex-plugin --json',
     'codex plugin add mogoo-codex-git@mogoo-codex-plugin --json',
   ]);
   await update({ action: 'install', target: next, confirmed: true }, true);
@@ -78,7 +78,6 @@ test('统一市场通过 git-subdir 更新 Git，忽略旧市场缓存，命令�
   assert.equal(result.installed, next);
   assert.equal(result.pending, true);
   assert.deepEqual(commands, [
-    ['plugin', 'marketplace', 'upgrade', sharedMarketplace, '--json'],
     ['plugin', 'add', `${name}@${sharedMarketplace}`, '--json'],
   ]);
 });
@@ -108,23 +107,27 @@ test('统一市场拒绝错误发行源、重复条目和被替换的 Git 来源
   }
 });
 
-test('统一市场刷新后重新核对 Git 条目及发行版本，发生变化时不安装', async t => {
+test('统一市场安装前重新核对 Git 条目及发行版本，发生变化时不安装', async t => {
   for (const change of ['version', 'source']) await t.test(change, async t => {
     const { home, projectRoot, catalog, saveCatalog, listing } = await sharedFixture(t);
-    let latest = next;
+    let checks = 0;
     const commands = [];
-    const update = createPluginUpdater({ home, projectRoot, readLatest: async () => latest, runCodex: async args => {
+    const update = createPluginUpdater({ home, projectRoot, readLatest: async () => {
+      if (++checks === 1) return next;
+      if (change === 'version') return later;
+      catalog.plugins[1].source.url = 'https://example.test/other.git';
+      await saveCatalog();
+      return next;
+    }, runCodex: async args => {
       if (args[2] === 'list') return JSON.stringify(listing);
       commands.push(args);
-      if (change === 'version') latest = later;
-      else { catalog.plugins[1].source.url = 'https://example.test/other.git'; await saveCatalog(); }
       return '';
     } });
     assert.equal((await update({ action: 'check' }, true)).canInstall, true);
     await update({ action: 'install', target: next, confirmed: true }, true);
     const result = await afterInstall(update);
     assert.equal(result.operation.state, 'error');
-    assert.deepEqual(commands, [['plugin', 'marketplace', 'upgrade', sharedMarketplace, '--json']]);
+    assert.deepEqual(commands, []);
   });
 });
 

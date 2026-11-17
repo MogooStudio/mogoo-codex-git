@@ -1,5 +1,10 @@
 # Mogoo Codex Git 更新记录
 
+## 0.1.25 · 2026-11-17
+
+- 统一市场内更新 Git 时直接拉取 Git 插件，不刷新其他插件缓存，修复正在运行的 Next 缓存被 Windows 锁定时阻断 Git 更新的问题。
+- 继续在安装前核对 Git 条目和发行版本，保留旧独立市场的更新兼容。
+
 ## 0.1.24 · 2026-11-17
 
 - 默认从 `Mogoo Codex Plugin`（`mogoo-codex-plugin`）统一市场安装 Git 插件，发行包继续由 GitHub 项目仓库提供。

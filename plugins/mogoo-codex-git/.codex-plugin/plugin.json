@@ -1,6 +1,6 @@
 {
   "name": "mogoo-codex-git",
-  "version": "0.1.24",
+  "version": "0.1.25",
   "description": "在 Codex 中自动关联当前聊天仓库或 worktree 的本地只读 Git 可视化面板。",
   "author": {
     "name": "mogoo"

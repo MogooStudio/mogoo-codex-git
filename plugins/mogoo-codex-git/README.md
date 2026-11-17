@@ -71,12 +71,11 @@ codex plugin remove mogoo-codex-git@mogoo-codex-plugin --json
 
 在 Git 面板底栏点击版本号打开「插件更新」，查看运行中、已安装、市场快照和远端版本。自动检查默认开启，打开面板时最多每 6 小时读取一次 GitHub 仓库的版本标签。检查失败后保留一小时冷却，也可在弹窗中关闭自动检查或手动检查。版本检查只读取标签；HTTP 连接失败或仓库需要认证时，复用 Git 的代理和凭据配置，后台检查不弹出登录提示，也不在插件中存储凭据。
 
-从统一市场安装的 Codex 面板支持「立即更新」。确认命令后，插件会刷新统一市场，重新核对 Git 的发行来源和版本，再安装 Git 插件。其他未安装的插件不会随之安装。Git 的远端版本仍读取 GitHub 项目标签；`git-subdir` 条目不在市场快照内保存插件清单，市场快照版本可能显示为空。底栏显示「等待生效」时，新开聊天或重启 Codex 加载新版。已有 GitHub 独立市场安装继续沿用旧更新路径，迁移后使用统一市场。
+从统一市场安装的 Codex 面板支持「立即更新」。确认命令后，插件会重新核对 Git 的发行来源和版本，再通过 `plugin add` 拉取 Git 新版。更新 Git 不刷新整个统一市场，避免正在运行的 Next 等插件缓存被 Windows 锁定而阻断更新；其他未安装的插件不会随之安装。Git 的远端版本仍读取 GitHub 项目标签；`git-subdir` 条目不在市场快照内保存插件清单，市场快照版本可能显示为空。底栏显示「等待生效」时，新开聊天或重启 Codex 加载新版。已有 GitHub 独立市场安装继续沿用旧更新路径，迁移后使用统一市场。
 
 浏览器或开发安装可在面板中查看版本和复制命令。统一市场安装也可以在终端执行：
 
 ```powershell
-codex plugin marketplace upgrade mogoo-codex-plugin --json
 codex plugin add mogoo-codex-git@mogoo-codex-plugin --json
 ```
 

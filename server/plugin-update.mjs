@@ -219,7 +219,7 @@ export function createPluginUpdater({
       operation = { state: 'error', target: operation.target, message: '更新已中断，请检查已安装版本后重试。' };
     }
     if (pending && !installing && compare(installed, operation?.target) >= 0) operation = null;
-    const commands = [upgrade, install].map(args => 'codex ' + args.join(' '));
+    const commands = (shared ? [install] : [upgrade, install]).map(args => 'codex ' + args.join(' '));
     return {
       running, ...versions, latest, target, pending, available, checking, operation,
       checkedAt: remote?.checkedAt ?? null, remoteStatus: remote?.status ?? 'unknown',
@@ -261,7 +261,9 @@ export function createPluginUpdater({
       try {
         if (compare((await local()).installed, target) < 0) {
           if (!await publicMarket()) throw new AppError('发行来源已变化，请重新检查更新。');
-          if (shared || compare((await local()).snapshot, target) < 0) {
+          // git-subdir resolves main during plugin add. Refreshing the whole
+          // shared market also replaces unrelated caches, which may be locked.
+          if (!shared && compare((await local()).snapshot, target) < 0) {
             await report('running', '正在刷新插件市场…');
             await runCodex(upgrade);
           }
