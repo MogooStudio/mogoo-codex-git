@@ -26,7 +26,7 @@ The repository is https://github.com/MogooStudio/mogoo-codex-git. Keep all of th
 
 The updater checks stable `vMAJOR.MINOR.PATCH` Git tags, while the documented marketplace installation follows `main`. Keep `main` installable, develop changes on feature branches, and commit source plus regenerated plugin files together. At release time the version on `main`, the generated plugin version, and the version tag must agree. Uploading a ZIP to Releases alone does not update the installed marketplace package.
 
-GitHub Releases can hold the standalone package generated above. GitHub Pages can serve `main:/docs`; `docs/.nojekyll` preserves the static-site layout. Neither feature requires a second repository.
+GitHub Releases can hold the standalone package generated above. The GitHub Pages workflow stages only presentation files from `docs/` and the required licenses into `release/pages/`. See [Pages preparation and deployment](PAGES.md) for account requirements, preview, and activation. Neither feature requires a second repository.
 
 This repository starts from the reviewed clean-source snapshot with a new history. Do not import an old `.git` directory or push local recovery/checkpoint references.
 

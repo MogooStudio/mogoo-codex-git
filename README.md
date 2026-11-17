@@ -75,6 +75,8 @@ pnpm check
 
 See [development notes](docs/DEVELOPMENT.md) for authenticated preview links and optional UI checks, and [release notes for maintainers](docs/RELEASING.md) for packaging.
 
+The product website lives in this same repository. See [GitHub Pages preparation](docs/PAGES.md) for local preview and deployment; preparing the site does not publish it.
+
 ## Feedback and contributions
 
 Reproducible bug reports, small fixes, and documentation improvements are welcome. Include the plugin version, Codex version, OS, installation source, and reproduction steps. Remove tokens, private paths, and real code first. Discuss substantial features before implementation. See [CONTRIBUTING.md](CONTRIBUTING.md).

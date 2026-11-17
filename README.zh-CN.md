@@ -2,6 +2,8 @@
 
 [English](README.md) | **简体中文**
 
+[产品展示页的预览与部署说明](docs/PAGES.md)（与插件使用同一仓库，准备页面不等于已经上线）
+
 在 Codex 聊天旁边，查看当前仓库的代码改动。
 
 mogoo-codex-git 会关联当前聊天的仓库或 worktree，让你查看文件差异、提交历史、分支和 Stash。需要继续操作时，可以把常用 Git 请求填入聊天草稿，核对后交给 Codex 处理。
