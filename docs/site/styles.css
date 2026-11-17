@@ -17,7 +17,7 @@ img{height:auto}.usage{max-width:31em}.blueprint .trace-section{color:var(--text
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}.btn:hover{transform:none}}
 
 .demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}.demo-grid figure{min-width:0}.demo-grid video{display:block;width:100%;aspect-ratio:16/9;background:#11151b;border-radius:8px}.demo-grid figcaption{margin-top:12px;color:var(--muted);font-size:14px}@media(max-width:900px){.demo-grid{grid-template-columns:1fr;gap:28px}}
-.version-note{display:flex;gap:12px;align-items:center;margin-bottom:22px;color:var(--accent);font-size:14px;letter-spacing:.02em}.phrase-note{margin-top:28px;padding-top:24px;border-top:1px solid var(--line)}.phrase-note h3{font-size:19px;font-weight:600;margin-bottom:10px}.access-note{margin-top:24px;padding:16px 18px;border-left:3px solid var(--accent);background:#f5f8ef;font-size:14px;color:var(--muted)}.access-note strong{color:var(--text);font-weight:600}.foot span a{text-decoration:underline;text-underline-offset:3px}
+.phrase-note{margin-top:28px;padding-top:24px;border-top:1px solid var(--line)}.phrase-note h3{font-size:19px;font-weight:600;margin-bottom:10px}.access-note{margin-top:24px;padding:16px 18px;border-left:3px solid var(--accent);background:#f5f8ef;font-size:14px;color:var(--muted)}.access-note strong{color:var(--text);font-weight:600}.foot span a{text-decoration:underline;text-underline-offset:3px}
 
 @media(min-width:651px) and (max-width:900px){
   .white .install-grid{grid-template-columns:1fr;gap:32px}
