@@ -11,8 +11,9 @@ if ((await readdir(output)).length) {
 }
 const files = [
   ['docs/index.html', 'index.html'],
+  ['docs/privacy.html', 'privacy.html'],
   ['docs/.nojekyll', '.nojekyll'],
-  ...['favicon.svg', 'site.js', 'styles.css'].map(name => [`docs/site/${name}`, `site/${name}`]),
+  ...['favicon.svg', 'site.js', 'analytics.js', 'styles.css'].map(name => [`docs/site/${name}`, `site/${name}`]),
   ...['history-dark.webp', 'history-light.webp', 'diff-detail.webp', 'diff-light-detail.webp']
     .map(name => [`docs/site/assets/${name}`, `site/assets/${name}`]),
   ...['alpine.min.js', 'gsap.min.js', 'ScrollTrigger.min.js']

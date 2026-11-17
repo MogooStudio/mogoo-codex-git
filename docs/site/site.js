@@ -1,17 +1,25 @@
 document.addEventListener('alpine:init',function(){
   Alpine.data('installer',function(){return{
-    mode:'agent',status:'复制',
+    mode:'agent',status:'复制',copying:false,
     command:'codex plugin marketplace add https://gitee.com/mogoo/mogoo-codex-next-release.git --ref main --json\ncodex plugin add mogoo-codex-git@mogoo-codex-plugin --json',
     agent:'请从 mogoo-codex-plugin 市场安装 mogoo-codex-git 插件，市场地址：https://gitee.com/mogoo/mogoo-codex-next-release.git',
     switchMode:function(mode){this.mode=mode;this.status='复制';},
     copy:async function(){
-      var value=this.mode==='agent'?this.agent:this.command;
-      this.status='正在复制';
-      try{await navigator.clipboard.writeText(value);this.status='已复制 ✓';}
-      catch(e){
-        var field=document.createElement('textarea');field.value=value;field.style.position='fixed';field.style.opacity='0';document.body.append(field);field.select();
-        var ok=false;try{ok=document.execCommand('copy');}catch(ignore){}field.remove();
-        this.status=ok?'已复制 ✓':'请选中文字复制';
+      if(this.copying)return;
+      var method=this.mode,value=method==='agent'?this.agent:this.command,ok=false;
+      this.copying=true;this.status='正在复制';
+      try{
+        try{await navigator.clipboard.writeText(value);ok=true;}
+        catch(e){
+          var field=document.createElement('textarea');field.value=value;field.style.position='fixed';field.style.opacity='0';document.body.append(field);field.select();
+          try{ok=document.execCommand('copy')===true;}catch(ignore){}finally{field.remove();}
+        }
+      }catch(ignore){}finally{
+        this.copying=false;
+        this.status=this.mode===method?(ok?'已复制 ✓':'请选中文字复制'):'复制';
+      }
+      if(ok){
+        try{window.mogooAnalytics?.track('install_copy_success',{method:method});}catch(ignore){}
       }
     }
   };});

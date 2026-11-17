@@ -53,6 +53,8 @@ After switching chats or worktrees, open the panel from the corresponding chat. 
 
 ## Git browsing and data handling
 
+The product website uses Clarity for traffic sources, install-link clicks, and successful copies. See the [website analytics notes](docs/ANALYTICS.md). This tracker is not included in the plugin or the local Git panel.
+
 Repository data is read locally. The browsing APIs do not stage, commit, switch branches, fetch, push, or upload repository contents. Git request templates are passed to Codex, which may then modify the repository according to the request.
 
 Installation, updates, and version checks use the network. Automatic checks read GitHub release tags and can be disabled in the update settings. If the HTTP connection fails or the repository requires authentication, the plugin falls back to a read-only Git tag query using Git's existing proxy and credential configuration. Background checks do not prompt for login or store credentials in the plugin. These statements describe the plugin, not the data handling of the entire Codex or AI platform.
