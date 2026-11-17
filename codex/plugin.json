@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "mogoo-codex-git",
-  "version": "0.1.23",
+  "version": "0.1.24",
   "author": { "name": "mogoo" },
   "homepage": "https://mogoostudio.github.io/mogoo-codex-git/",
   "repository": "https://github.com/MogooStudio/mogoo-codex-git",

@@ -21,18 +21,18 @@ mogoo-codex-git 会关联当前聊天的仓库或 worktree，让你查看文件�
 把这句话交给支持安装插件的 Codex Agent：
 
 ```text
-请帮我安装这个 Codex 插件：https://github.com/MogooStudio/mogoo-codex-git
+请从 mogoo-codex-plugin 市场安装 mogoo-codex-git 插件，市场地址：https://gitee.com/mogoo/mogoo-codex-next-release.git
 ```
 
 也可以在终端运行：
 
 ```powershell
-codex plugin marketplace add https://github.com/MogooStudio/mogoo-codex-git.git --ref main --json
-codex plugin add mogoo-codex-git@mogoo-codex-git --json
-codex plugin list --marketplace mogoo-codex-git --json
+codex plugin marketplace add https://gitee.com/mogoo/mogoo-codex-next-release.git --ref main --json
+codex plugin add mogoo-codex-git@mogoo-codex-plugin --json
+codex plugin list --marketplace mogoo-codex-plugin --json
 ```
 
-这是自定义插件市场安装。`MogooStudio/mogoo-codex-git` 同时保存源码和构建好的插件，安装与更新使用同一个 GitHub 仓库。使用者无需构建源码。使用、更新和卸载见[插件说明](codex/PLUGIN-README.md)。
+这是自定义插件市场安装。`Mogoo Codex Plugin` 统一列出 Next 和 Git；Git 插件的源码、构建包和版本标签由 `MogooStudio/mogoo-codex-git` 提供。使用者无需构建源码。使用、更新和卸载见[插件说明](codex/PLUGIN-README.md)。
 
 ## 第一次使用
 

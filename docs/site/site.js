@@ -1,8 +1,8 @@
 document.addEventListener('alpine:init',function(){
   Alpine.data('installer',function(){return{
     mode:'agent',status:'复制',
-    command:'codex plugin marketplace add https://github.com/MogooStudio/mogoo-codex-git.git --ref main --json\ncodex plugin add mogoo-codex-git@mogoo-codex-git --json',
-    agent:'请帮我安装这个 Codex 插件：https://github.com/MogooStudio/mogoo-codex-git',
+    command:'codex plugin marketplace add https://gitee.com/mogoo/mogoo-codex-next-release.git --ref main --json\ncodex plugin add mogoo-codex-git@mogoo-codex-plugin --json',
+    agent:'请从 mogoo-codex-plugin 市场安装 mogoo-codex-git 插件，市场地址：https://gitee.com/mogoo/mogoo-codex-next-release.git',
     switchMode:function(mode){this.mode=mode;this.status='复制';},
     copy:async function(){
       var value=this.mode==='agent'?this.agent:this.command;

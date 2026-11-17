@@ -145,7 +145,7 @@
 <div>
 <h2>安装到 Codex</h2>
 <p class="install-intro">让 Codex 安装，或在终端运行命令。无需自行构建。</p>
-<p class="access-note">免费开源，安装与更新均通过 GitHub。</p>
+<p class="access-note">免费开源，从 Mogoo Codex Plugin 统一市场安装。</p>
 <div class="requirements">
 <span>支持插件的 Codex</span>
 <span>Git</span>
@@ -165,9 +165,9 @@
 <span x-text="mode==='agent'?'复制后发给 Codex':'在终端运行'">复制后发给 Codex</span>
 <button class="copy-btn" @click="copy()" x-text="status" aria-live="polite">复制</button>
 </div>
-<p class="agent-copy" id="install-agent" role="tabpanel" aria-labelledby="agent-tab" x-show="mode==='agent'" x-text="agent">请帮我安装这个 Codex 插件：https://github.com/MogooStudio/mogoo-codex-git</p>
-<pre id="install-terminal" role="tabpanel" aria-labelledby="terminal-tab" x-show="mode==='terminal'" x-cloak x-text="command">codex plugin marketplace add https://github.com/MogooStudio/mogoo-codex-git.git --ref main --json
-codex plugin add mogoo-codex-git@mogoo-codex-git --json</pre>
+<p class="agent-copy" id="install-agent" role="tabpanel" aria-labelledby="agent-tab" x-show="mode==='agent'" x-text="agent">请从 mogoo-codex-plugin 市场安装 mogoo-codex-git 插件，市场地址：https://gitee.com/mogoo/mogoo-codex-next-release.git</p>
+<pre id="install-terminal" role="tabpanel" aria-labelledby="terminal-tab" x-show="mode==='terminal'" x-cloak x-text="command">codex plugin marketplace add https://gitee.com/mogoo/mogoo-codex-next-release.git --ref main --json
+codex plugin add mogoo-codex-git@mogoo-codex-plugin --json</pre>
 </div>
 <p class="usage">Windows 已验证，macOS / Linux 待验证。插件未出现时，新开聊天或重启 Codex。</p>
 </div>

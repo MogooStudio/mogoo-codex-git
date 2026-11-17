@@ -8,17 +8,17 @@
 
 需要支持 `codex plugin` 命令的 Codex、Node.js 22.12+ 和 Git。插件内置已构建网页和服务，不需要 pnpm 或安装前端依赖。当前支持在 Windows 本机使用；其他平台未完成运行验证。
 
-从 GitHub 安装：
+从统一的 Mogoo Codex Plugin 市场安装：
 
 ```powershell
-codex plugin marketplace add https://github.com/MogooStudio/mogoo-codex-git.git --ref main --json
-codex plugin add mogoo-codex-git@mogoo-codex-git --json
-codex plugin list --marketplace mogoo-codex-git --json
+codex plugin marketplace add https://gitee.com/mogoo/mogoo-codex-next-release.git --ref main --json
+codex plugin add mogoo-codex-git@mogoo-codex-plugin --json
+codex plugin list --marketplace mogoo-codex-plugin --json
 ```
 
-Agent 收到安装请求时，先核对 `codex plugin --help`、`node --version` 和 `git --version`。核对市场来源为 `https://github.com/MogooStudio/mogoo-codex-git.git`。执行上述命令后检查安装结果；不要把开发目录里的 `codex/skills/` 单独当成完整插件安装。
+Agent 收到安装请求时，先核对 `codex plugin --help`、`node --version` 和 `git --version`。市场标识为 `mogoo-codex-plugin`，市场来源为 `https://gitee.com/mogoo/mogoo-codex-next-release.git`；其中 Git 条目通过 `git-subdir` 指向 `https://github.com/MogooStudio/mogoo-codex-git.git` 的 `plugins/mogoo-codex-git`。执行上述命令后检查安装结果；不要把开发目录里的 `codex/skills/` 单独当成完整插件安装。
 
-解压发布包，在包含 `.agents/plugins/marketplace.json` 的目录执行：
+独立 ZIP 发布包继续保留旧市场，供离线分发和已有安装兼容使用。解压后，在包含 `.agents/plugins/marketplace.json` 的目录执行：
 
 ```powershell
 codex plugin marketplace add . --json
@@ -26,7 +26,22 @@ codex plugin add mogoo-codex-git@mogoo-codex-git --json
 codex plugin list --marketplace mogoo-codex-git --json
 ```
 
-这是自定义插件市场安装，不会发布到公共插件目录。Codex 使用安装缓存中的完整副本运行插件。使用本地发布包安装时，保留解压目录作为后续更新来源；GitHub 安装直接从同一仓库获取更新。移动或移除开发源码不影响已安装副本运行。
+这是自定义插件市场安装。统一市场列出 Next 和 Git，安装 Git 不会同时安装 Next。Codex 使用安装缓存中的完整副本运行插件，Git 的源码、运行包和版本标签仍由 GitHub 项目仓库提供。使用本地发布包安装时，保留解压目录作为后续更新来源。移动或移除开发源码不影响已安装副本运行。
+
+## 从旧独立市场迁移
+
+先刷新统一市场并安装 Git，再核对其版本不低于原安装，最后移除旧条目：
+
+```powershell
+codex plugin marketplace add https://gitee.com/mogoo/mogoo-codex-next-release.git --ref main --json
+codex plugin marketplace upgrade mogoo-codex-plugin --json
+codex plugin add mogoo-codex-git@mogoo-codex-plugin --json
+codex plugin list --marketplace mogoo-codex-plugin --json
+codex plugin remove mogoo-codex-git@mogoo-codex-git --json
+codex plugin marketplace remove mogoo-codex-git --json
+```
+
+迁移后新开聊天或重启 Codex。不要移除 `mogoo-codex-plugin` 市场，它可能还在提供 Next 等其他插件。更新检查设置保存在 `~/.codex/mogoo-codex-git/`，迁移不会清除这些设置。
 
 ## 使用
 
@@ -49,21 +64,20 @@ codex plugin list --marketplace mogoo-codex-git --json
 ## 卸载
 
 ```powershell
-codex plugin remove mogoo-codex-git@mogoo-codex-git --json
-codex plugin marketplace remove mogoo-codex-git --json
+codex plugin remove mogoo-codex-git@mogoo-codex-plugin --json
 ```
 
 ## 更新
 
 在 Git 面板底栏点击版本号打开「插件更新」，查看运行中、已安装、市场快照和远端版本。自动检查默认开启，打开面板时最多每 6 小时读取一次 GitHub 仓库的版本标签。检查失败后保留一小时冷却，也可在弹窗中关闭自动检查或手动检查。版本检查只读取标签；HTTP 连接失败或仓库需要认证时，复用 Git 的代理和凭据配置，后台检查不弹出登录提示，也不在插件中存储凭据。
 
-从上述 GitHub 仓库安装的 Codex 面板支持「立即更新」。确认命令后，插件会重新核对安装状态，并通过 Codex 更新市场及插件。底栏显示「等待生效」时，新开聊天或重启 Codex 加载新版。
+从统一市场安装的 Codex 面板支持「立即更新」。确认命令后，插件会刷新统一市场，重新核对 Git 的发行来源和版本，再安装 Git 插件。其他未安装的插件不会随之安装。Git 的远端版本仍读取 GitHub 项目标签；`git-subdir` 条目不在市场快照内保存插件清单，市场快照版本可能显示为空。底栏显示「等待生效」时，新开聊天或重启 Codex 加载新版。已有 GitHub 独立市场安装继续沿用旧更新路径，迁移后使用统一市场。
 
-浏览器或开发安装可在面板中查看版本和复制命令。GitHub 安装也可以在终端执行：
+浏览器或开发安装可在面板中查看版本和复制命令。统一市场安装也可以在终端执行：
 
 ```powershell
-codex plugin marketplace upgrade mogoo-codex-git --json
-codex plugin add mogoo-codex-git@mogoo-codex-git --json
+codex plugin marketplace upgrade mogoo-codex-plugin --json
+codex plugin add mogoo-codex-git@mogoo-codex-plugin --json
 ```
 
 更新后新开聊天或重启 Codex，加载新版插件。

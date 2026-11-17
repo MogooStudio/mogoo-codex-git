@@ -12,9 +12,8 @@ import { AppError } from './git.mjs';
 const project = fileURLToPath(new URL('../', import.meta.url));
 const { name, version: running, repository } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const source = repository.url;
-const pluginId = `${name}@${name}`;
-const upgrade = ['plugin', 'marketplace', 'upgrade', name, '--json'];
-const install = ['plugin', 'add', pluginId, '--json'];
+const sharedMarketplace = 'mogoo-codex-plugin';
+const sharedSource = 'https://gitee.com/mogoo/mogoo-codex-next-release.git';
 const changelog = source.replace(/\.git$/, '/blob/main/CHANGELOG.zh.md');
 const hour = 3_600_000;
 const stableVersion = /^(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})$/;
@@ -153,8 +152,14 @@ export function createPluginUpdater({
     windowsHide: true, timeout: args[2] === 'list' ? 5000 : 60000, maxBuffer: 1024 * 1024,
   })).stdout,
 } = {}) {
-  const base = path.join(home, 'plugins', 'cache', name, name);
-  const market = path.join(home, '.tmp', 'marketplaces', name);
+  // Existing standalone installations keep their update route until migrated.
+  const legacyBase = path.join(home, 'plugins', 'cache', name, name);
+  const marketplace = path.relative(legacyBase, path.resolve(projectRoot)) === running ? name : sharedMarketplace;
+  const shared = marketplace === sharedMarketplace;
+  const base = path.join(home, 'plugins', 'cache', marketplace, name);
+  const market = path.join(home, '.tmp', 'marketplaces', marketplace);
+  const upgrade = ['plugin', 'marketplace', 'upgrade', marketplace, '--json'];
+  const install = ['plugin', 'add', `${name}@${marketplace}`, '--json'];
   const state = path.join(home, 'mogoo-codex-git', 'update');
   const file = key => path.join(state, key + '.json');
   const checkLock = path.join(state, 'check.lock');
@@ -168,15 +173,24 @@ export function createPluginUpdater({
       const value = await manifestVersion(path.join(base, entry.name));
       return value === entry.name ? value : null;
     }));
-    return { installed: newest(...versions), snapshot: await manifestVersion(path.join(market, 'plugins', name)) };
+    // Codex resolves git-subdir entries when installing, rather than keeping
+    // their manifests inside the marketplace snapshot.
+    return { installed: newest(...versions), snapshot: shared ? null : await manifestVersion(path.join(market, 'plugins', name)) };
   }
 
   async function publicMarket() {
     // Use Codex's own interpretation of its configuration and verify the exact source.
     const { marketplaces } = JSON.parse(await runCodex(['plugin', 'marketplace', 'list', '--json']));
-    return marketplaces.filter(entry => entry.name === name).length === 1 && marketplaces.some(entry =>
-      entry.name === name && path.resolve(entry.root) === market &&
-      entry.marketplaceSource?.sourceType === 'git' && entry.marketplaceSource?.source === source);
+    if (marketplaces.filter(entry => entry.name === marketplace).length !== 1 || !marketplaces.some(entry =>
+      entry.name === marketplace && path.resolve(entry.root) === market &&
+      entry.marketplaceSource?.sourceType === 'git' && entry.marketplaceSource?.source === (shared ? sharedSource : source))) return false;
+    if (!shared) return true;
+    const catalog = await readState(path.join(market, '.agents', 'plugins', 'marketplace.json'));
+    const entries = catalog?.plugins?.filter(entry => entry.name === name);
+    const entry = entries?.[0]?.source;
+    return catalog?.name === marketplace && entries?.length === 1 && entry?.source === 'git-subdir'
+      && entry.url === source && typeof entry.path === 'string'
+      && entry.path.replace(/^\.\//, '') === `plugins/${name}` && entry.ref === 'main';
   }
   let sourceStatus;
   async function canInstall() {
@@ -247,19 +261,19 @@ export function createPluginUpdater({
       try {
         if (compare((await local()).installed, target) < 0) {
           if (!await publicMarket()) throw new AppError('发行来源已变化，请重新检查更新。');
-          if (compare((await local()).snapshot, target) < 0) {
+          if (shared || compare((await local()).snapshot, target) < 0) {
             await report('running', '正在刷新插件市场…');
             await runCodex(upgrade);
           }
           const versions = await local();
           if (compare(versions.installed, target) < 0) {
-            if (versions.snapshot !== target || !await publicMarket()) {
+            if (!await publicMarket() || (shared ? versionOf(await readLatest()) !== target : versions.snapshot !== target)) {
               throw new AppError('市场版本或来源已变化，请重新检查后确认更新。');
             }
             await report('running', '正在安装新版插件…');
             const ready = await local();
             if (compare(ready.installed, target) < 0) {
-              if (ready.snapshot !== target) throw new AppError('市场版本已变化，请重新确认更新。');
+              if ((shared ? !await publicMarket() : ready.snapshot !== target)) throw new AppError('市场版本已变化，请重新确认更新。');
               await runCodex(install);
             }
           }

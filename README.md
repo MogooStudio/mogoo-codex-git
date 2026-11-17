@@ -21,18 +21,18 @@ Requires Codex with the `codex plugin` commands, Git, and Node.js 22.12+. Window
 Ask a Codex agent that can install plugins:
 
 ```text
-Please install this Codex plugin: https://github.com/MogooStudio/mogoo-codex-git
+Please install mogoo-codex-git from the mogoo-codex-plugin marketplace: https://gitee.com/mogoo/mogoo-codex-next-release.git
 ```
 
 Or run:
 
 ```powershell
-codex plugin marketplace add https://github.com/MogooStudio/mogoo-codex-git.git --ref main --json
-codex plugin add mogoo-codex-git@mogoo-codex-git --json
-codex plugin list --marketplace mogoo-codex-git --json
+codex plugin marketplace add https://gitee.com/mogoo/mogoo-codex-next-release.git --ref main --json
+codex plugin add mogoo-codex-git@mogoo-codex-plugin --json
+codex plugin list --marketplace mogoo-codex-plugin --json
 ```
 
-This uses a custom plugin marketplace. `MogooStudio/mogoo-codex-git` contains the source and the prebuilt plugin; installation and updates use this same GitHub repository. End users do not need to build the source. See the [plugin guide (Chinese)](codex/PLUGIN-README.md) for usage, updates, and removal.
+The custom **Mogoo Codex Plugin** marketplace lists Next and Git together. Git's source, prebuilt plugin, and release tags remain in `MogooStudio/mogoo-codex-git`. End users do not need to build the source. See the [plugin guide (Chinese)](codex/PLUGIN-README.md) for usage, updates, removal, and migration from the old standalone marketplace.
 
 ## First use
 
