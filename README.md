@@ -6,11 +6,9 @@ Review code changes beside your Codex chat.
 
 mogoo-codex-git opens the repository or worktree associated with the current chat. Browse file diffs, commit history, branches, and Stash snapshots, then prepare a Git request in the chat draft when you want Codex to take the next step.
 
-![v0.1.20 browser view: commit graph and file diff in a demo repository](docs/images/mogoo-codex-git-overview.png)
+![Commit history and file diff](docs/images/mogoo-codex-git-overview.png)
 
-[26-second quick demo](docs/media/quick-demo.mp4) · [86-second full demo](docs/media/full-demo.mp4) · [Media and version notes](docs/media/README.md)
-
-Screenshots show the actual browser view of the v0.1.20 candidate. Videos show the native Codex chat layout recorded with v0.1.18, with updated closing captions. All media uses a dedicated demo repository.
+[26-second quick demo](docs/media/quick-demo.mp4) · [86-second full demo](docs/media/full-demo.mp4)
 
 [![Watch the 26-second Codex chat demo](docs/media/quick-demo-poster.jpg)](docs/media/quick-demo.mp4)
 
@@ -55,7 +53,7 @@ After switching chats or worktrees, open the panel from the corresponding chat. 
 
 Repository data is read locally. The browsing APIs do not stage, commit, switch branches, fetch, push, or upload repository contents. Git request templates are passed to Codex, which may then modify the repository according to the request.
 
-Installation, updates, and version checks use the network. Automatic checks read GitHub release tags and can be disabled in the update settings. For a private repository, the plugin falls back to a read-only Git tag query using existing Git credentials. Background checks do not prompt for login or store credentials in the plugin. These statements describe the plugin, not the data handling of the entire Codex or AI platform.
+Installation, updates, and version checks use the network. Automatic checks read GitHub release tags and can be disabled in the update settings. If the HTTP connection fails or the repository requires authentication, the plugin falls back to a read-only Git tag query using Git's existing proxy and credential configuration. Background checks do not prompt for login or store credentials in the plugin. These statements describe the plugin, not the data handling of the entire Codex or AI platform.
 
 - Remote status uses local remote-tracking references; browsing does not fetch.
 - Search covers loaded history, up to 2,000 commits. Large diffs and untracked-file previews are limited.

@@ -65,7 +65,7 @@ test('跨面板共用检查缓存和开关，手动检查尊重失败冷却', as
   assert.equal(checks, 2);
 });
 
-test('私有发行源仅在 HTTP 拒绝访问时通过无交互 Git 凭据读取稳定标签', async () => {
+test('私有发行源在 HTTP 拒绝访问时通过无交互 Git 凭据读取稳定标签', async () => {
   for (const status of [401, 403, 404]) {
     const response = new Response('authentication required', { status });
     let calls = 0;
@@ -92,6 +92,77 @@ test('私有发行源仅在 HTTP 拒绝访问时通过无交互 Git 凭据读取
     request: async () => new Response('unavailable', { status: 503 }),
     runGit: async () => assert.fail('HTTP service failures must not invoke Git'),
   }), /Release source unavailable/);
+});
+
+test('HTTP 连接失败、超时或读取中断时，回退到无交互 Git 标签查询', async t => {
+  const failures = [
+    ['connection', async () => { throw new TypeError('fetch failed'); }],
+    ['timeout', async () => { throw new DOMException('request timed out', 'TimeoutError'); }],
+    ['body', async () => new Response(new ReadableStream({
+      start(controller) { controller.error(new TypeError('connection reset')); },
+    }), { headers: { 'Content-Type': 'application/x-git-upload-pack-advertisement' } })],
+  ];
+  for (const [label, request] of failures) await t.test(label, async () => {
+    let calls = 0;
+    const result = await fetchLatest({ request, runGit: async (command, args, options) => {
+      calls++;
+      assert.equal(command, 'git');
+      assert.deepEqual(args, ['ls-remote', '--tags', '--refs', '--', repository.url]);
+      assert.equal(options.env.GIT_TERMINAL_PROMPT, '0');
+      assert.equal(options.env.GCM_INTERACTIVE, '0');
+      assert.equal(options.timeout, 10000);
+      assert.equal(options.maxBuffer, 1024 * 1024);
+      return { stdout: `${'b'.repeat(40)}\trefs/tags/v${version}\n` };
+    } });
+    assert.equal(result, version);
+    assert.equal(calls, 1);
+  });
+});
+
+test('HTTP 错误响应的清理失败不改变认证回退或服务错误拒绝', async () => {
+  for (const status of [401, 403, 404, 503]) {
+    let calls = 0;
+    const result = fetchLatest({
+      request: async () => new Response(new ReadableStream({
+        start(controller) { controller.error(new TypeError('connection reset')); },
+      }), { status }),
+      runGit: async () => {
+        calls++;
+        return { stdout: `${'b'.repeat(40)}\trefs/tags/v${version}\n` };
+      },
+    });
+    if (status === 503) {
+      await assert.rejects(result, /^Error: Release source unavailable$/);
+      assert.equal(calls, 0);
+    } else {
+      assert.equal(await result, version);
+      assert.equal(calls, 1);
+    }
+  }
+});
+
+test('无效或过大的 HTTP 标签响应不触发 Git 回退', async () => {
+  const oversized = new ReadableStream({
+    start(controller) { controller.enqueue(new Uint8Array(1024 * 1024 + 1)); },
+    cancel() { throw new TypeError('connection reset while cancelling'); },
+  });
+  for (const body of [null, 'invalid refs', 'a'.repeat(1024 * 1024 + 1), oversized]) {
+    await assert.rejects(fetchLatest({
+      request: async () => new Response(body, { headers: { 'Content-Type': 'application/x-git-upload-pack-advertisement' } }),
+      runGit: async () => assert.fail('Invalid responses must not invoke Git'),
+    }), /Invalid ref advertisement|Ref advertisement too large/);
+  }
+});
+
+test('HTTP 和 Git 都不可用时，只返回通用错误', async () => {
+  await assert.rejects(fetchLatest({
+    request: async () => { throw new TypeError('proxy-private-diagnostic'); },
+    runGit: async () => { throw new Error('credential-helper-private-diagnostic'); },
+  }), error => {
+    assert.equal(error.message, 'Release source unavailable');
+    assert.equal(error.cause, undefined);
+    return true;
+  });
 });
 
 test('私有源凭据失败或超大标签响应只返回通用错误，不暴露 Git 输出', async () => {

@@ -42,44 +42,56 @@ export function latestTag(data) {
   return latest;
 }
 
-export async function fetchLatest({ request = fetch, runGit = exec } = {}) {
-  const response = await request(`${source}/info/refs?service=git-upload-pack`, {
-    redirect: 'error', signal: AbortSignal.timeout(10000),
-    headers: { Accept: 'application/x-git-upload-pack-advertisement' },
-  });
-  if (!response.ok || !response.headers.get('content-type')?.startsWith('application/x-git-upload-pack-advertisement')) {
-    await response.body?.cancel();
-    // Private GitHub repositories hide their refs from anonymous HTTP requests.
-    // Delegate authentication to Git's existing credential helper; never read or
-    // persist credentials in the plugin, and never prompt during a background check.
-    if ([401, 403, 404].includes(response.status)) {
-      try {
-        const { stdout } = await runGit('git', ['ls-remote', '--tags', '--refs', '--', source], {
-          cwd: project,
-          env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: '0' },
-          windowsHide: true, timeout: 10000, maxBuffer: 1024 * 1024,
-        });
-        if (typeof stdout !== 'string' || Buffer.byteLength(stdout) > 1024 * 1024) throw new Error('Invalid refs');
-        let latest = null;
-        for (const line of stdout.split(/\r?\n/)) {
-          const tag = line.match(/^(?:[0-9a-f]{40}|[0-9a-f]{64})\trefs\/tags\/v([0-9.]+)$/i);
-          latest = newest(latest, versionOf(tag?.[1]));
-        }
-        return latest;
-      } catch {
-        // Git/helper stderr can contain local paths or authentication details.
-        throw new Error('Release source unavailable');
-      }
+async function fetchLatestViaGit(runGit) {
+  // Reuse Git's proxy and credential configuration without storing credentials
+  // or prompting for login during a background check.
+  try {
+    const { stdout } = await runGit('git', ['ls-remote', '--tags', '--refs', '--', source], {
+      cwd: project,
+      env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: '0' },
+      windowsHide: true, timeout: 10000, maxBuffer: 1024 * 1024,
+    });
+    if (typeof stdout !== 'string' || Buffer.byteLength(stdout) > 1024 * 1024) throw new Error('Invalid refs');
+    let latest = null;
+    for (const line of stdout.split(/\r?\n/)) {
+      const tag = line.match(/^(?:[0-9a-f]{40}|[0-9a-f]{64})\trefs\/tags\/v([0-9.]+)$/i);
+      latest = newest(latest, versionOf(tag?.[1]));
     }
+    return latest;
+  } catch {
+    // Git/helper stderr can contain local paths or authentication details.
     throw new Error('Release source unavailable');
   }
+}
+
+export async function fetchLatest({ request = fetch, runGit = exec } = {}) {
+  let response;
+  try {
+    response = await request(`${source}/info/refs?service=git-upload-pack`, {
+      redirect: 'error', signal: AbortSignal.timeout(10000),
+      headers: { Accept: 'application/x-git-upload-pack-advertisement' },
+    });
+  } catch {
+    return fetchLatestViaGit(runGit);
+  }
+  if (!response.ok || !response.headers.get('content-type')?.startsWith('application/x-git-upload-pack-advertisement')) {
+    await response.body?.cancel().catch(() => {});
+    if ([401, 403, 404].includes(response.status)) return fetchLatestViaGit(runGit);
+    throw new Error('Release source unavailable');
+  }
+  if (!response.body) throw new Error('Invalid ref advertisement');
   const chunks = [];
   let size = 0;
-  for await (const chunk of response.body) {
-    size += chunk.byteLength;
-    if (size > 1024 * 1024) throw new Error('Ref advertisement too large');
-    chunks.push(chunk);
+  try {
+    for await (const chunk of response.body) {
+      size += chunk.byteLength;
+      if (size > 1024 * 1024) break;
+      chunks.push(chunk);
+    }
+  } catch {
+    if (size <= 1024 * 1024) return fetchLatestViaGit(runGit);
   }
+  if (size > 1024 * 1024) throw new Error('Ref advertisement too large');
   return latestTag(Buffer.concat(chunks));
 }
 

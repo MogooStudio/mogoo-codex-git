@@ -8,11 +8,9 @@
 
 mogoo-codex-git 会关联当前聊天的仓库或 worktree，让你查看文件差异、提交历史、分支和 Stash。需要继续操作时，可以把常用 Git 请求填入聊天草稿，核对后交给 Codex 处理。
 
-![v0.1.20 浏览器视图：演示仓库的提交关系图与文件差异](docs/images/mogoo-codex-git-overview.png)
+![提交历史与文件差异](docs/images/mogoo-codex-git-overview.png)
 
-[26 秒快速演示](docs/media/quick-demo.mp4) · [86 秒完整演示](docs/media/full-demo.mp4) · [素材与版本说明](docs/media/README.md)
-
-截图来自 v0.1.20 候选版本的真实浏览器界面；视频为 v0.1.18 的 Codex 聊天同屏录制，结尾字幕已更新。画面使用独立演示仓库。
+[26 秒快速演示](docs/media/quick-demo.mp4) · [86 秒完整演示](docs/media/full-demo.mp4)
 
 [![观看 26 秒 Codex 同屏演示](docs/media/quick-demo-poster.jpg)](docs/media/quick-demo.mp4)
 
@@ -57,7 +55,7 @@ codex plugin list --marketplace mogoo-codex-git --json
 
 Git 浏览数据在本机读取。插件的浏览接口不会暂存、提交、切换分支、fetch 或推送，也不会上传仓库内容。「Git 常用语」会把你选择的请求交给 Codex，后续处理可能修改仓库。
 
-安装、更新和版本检查需要联网。自动检查读取 GitHub 发行标签，可以在插件更新设置中关闭。私有仓库会通过 Git 已配置的凭据只读查询标签；后台检查不弹出登录提示，也不在插件中存储凭据。以上说明针对插件自身，不扩大为对 Codex / AI 平台整体数据行为的承诺。
+安装、更新和版本检查需要联网。自动检查读取 GitHub 发行标签，可以在插件更新设置中关闭。HTTP 连接失败或仓库需要认证时，会复用 Git 的代理和凭据配置只读查询标签；后台检查不弹出登录提示，也不在插件中存储凭据。以上说明针对插件自身，不扩大为对 Codex / AI 平台整体数据行为的承诺。
 
 - 远程状态来自本机远程跟踪引用，查看面板不会自动 fetch。
 - 搜索覆盖已加载历史，最多 2,000 条提交；大文件差异和未跟踪文件预览有大小限制。
