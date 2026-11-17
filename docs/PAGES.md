@@ -1,16 +1,14 @@
 # GitHub Pages
 
 展示页、源码和预构建插件使用同一个仓库：`MogooStudio/mogoo-codex-git`。
-计划地址：`https://mogoostudio.github.io/mogoo-codex-git/`。
-此文件和工作流本身不代表网站已经上线。
+网站地址：[mogoostudio.github.io/mogoo-codex-git](https://mogoostudio.github.io/mogoo-codex-git/)。
 工作流仅允许手动触发；提交或推送代码不会自动发布网站。
 
 ## 发布前提
 
-- GitHub Free 的私有仓库不能使用 Pages。保持仓库私有时，需要支持私有仓库 Pages 的套餐。
-- Pages 网站本身将公开可访问；私有源码的安装仍要求仓库访问权限。
-- 仓库可见性调整、付费升级和网站上线由维护者单独决定。
-- 若以后公开仓库，发布前更新首页的私有安装提示。
+- GitHub Free 支持从公开仓库发布 Pages；私有仓库需要支持 Pages 的套餐。
+- Pages 网站将公开可访问，启用前确认展示内容适合公开。
+- 仓库公开与网站上线是两个独立步骤；公开仓库不会自动部署网站。
 
 ## 本地准备
 

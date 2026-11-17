@@ -2,7 +2,7 @@
 
 [English](README.md) | **简体中文**
 
-[产品展示页的预览与部署说明](docs/PAGES.md)（与插件使用同一仓库，准备页面不等于已经上线）
+[网站](https://mogoostudio.github.io/mogoo-codex-git/)
 
 在 Codex 聊天旁边，查看当前仓库的代码改动。
 
@@ -32,7 +32,7 @@ codex plugin add mogoo-codex-git@mogoo-codex-git --json
 codex plugin list --marketplace mogoo-codex-git --json
 ```
 
-仓库目前为私有，安装需要已有的 Git 访问权限。这是自定义插件市场安装。`MogooStudio/mogoo-codex-git` 同时保存源码和构建好的插件，安装与更新使用同一个 GitHub 仓库。使用者无需构建源码。使用、更新和卸载见[插件说明](codex/PLUGIN-README.md)。
+这是自定义插件市场安装。`MogooStudio/mogoo-codex-git` 同时保存源码和构建好的插件，安装与更新使用同一个 GitHub 仓库。使用者无需构建源码。使用、更新和卸载见[插件说明](codex/PLUGIN-README.md)。
 
 ## 第一次使用
 

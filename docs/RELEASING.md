@@ -11,7 +11,7 @@ Source preparation and publication are separate steps. This source snapshot does
 5. Review third-party notices and screenshot provenance. Use only the demo assets described in [media notes](media/README.md).
 6. Build into a new, unused directory with `node scripts/package-plugin.mjs --output <new-directory>` after `pnpm build`.
 
-The GitHub repository is currently private. v0.1.20 is the reviewed installation baseline; v0.1.21 adds authenticated tag checks for private repositories. Keep existing tags immutable and choose a new version for subsequent changes. Publishing a tag in this private repository does not make the source public.
+Keep existing tags immutable and choose a new version for subsequent changes. At publication, verify that the repository visibility, installation instructions, generated plugin, and release tag match the intended release.
 
 ## One GitHub repository
 
@@ -22,7 +22,7 @@ The repository is https://github.com/MogooStudio/mogoo-codex-git. Keep all of th
 - The generated, self-contained plugin in `plugins/mogoo-codex-git/`, including its built `dist/` assets. End users install this package without source dependencies.
 - `docs/`, the optional GitHub Pages site; Releases and version tags belong to the same repository.
 
-`package.json.repository.url` must be `https://github.com/MogooStudio/mogoo-codex-git.git`. The updater reads this value for tag checks and compares it with Codex's registered marketplace source. Use exactly this clone URL in installation commands. The manifest and homepage use the corresponding GitHub web URL.
+`package.json.repository.url` must be `https://github.com/MogooStudio/mogoo-codex-git.git`. The updater reads this value for tag checks and compares it with Codex's registered marketplace source. Use exactly this clone URL in installation commands. The manifest repository uses the corresponding GitHub web URL; homepage and website links use `https://mogoostudio.github.io/mogoo-codex-git/`.
 
 The updater checks stable `vMAJOR.MINOR.PATCH` Git tags, while the documented marketplace installation follows `main`. Keep `main` installable, develop changes on feature branches, and commit source plus regenerated plugin files together. At release time the version on `main`, the generated plugin version, and the version tag must agree. Uploading a ZIP to Releases alone does not update the installed marketplace package.
 

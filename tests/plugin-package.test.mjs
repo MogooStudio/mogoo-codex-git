@@ -30,8 +30,8 @@ test('发布包：搬到独立目录后无需源码或 node_modules 即可运行
   assert.equal(manifest.author.name, 'mogoo');
   assert.deepEqual(overlay.author, manifest.author);
   assert.equal(pkg.author, manifest.author.name);
-  assert.equal(manifest.homepage, 'https://github.com/MogooStudio/mogoo-codex-git');
-  assert.equal(manifest.repository, manifest.homepage);
+  assert.equal(manifest.homepage, 'https://mogoostudio.github.io/mogoo-codex-git/');
+  assert.equal(manifest.repository, 'https://github.com/MogooStudio/mogoo-codex-git');
   assert.equal(pkg.repository.url, `${manifest.repository}.git`);
   assert.equal(overlay.homepage, manifest.homepage);
   assert.equal(pkg.homepage, manifest.homepage);

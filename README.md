@@ -2,6 +2,8 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
+[Website](https://mogoostudio.github.io/mogoo-codex-git/)
+
 Review code changes beside your Codex chat.
 
 mogoo-codex-git opens the repository or worktree associated with the current chat. Browse file diffs, commit history, branches, and Stash snapshots, then prepare a Git request in the chat draft when you want Codex to take the next step.
@@ -30,7 +32,7 @@ codex plugin add mogoo-codex-git@mogoo-codex-git --json
 codex plugin list --marketplace mogoo-codex-git --json
 ```
 
-The repository is currently private; installation requires Git access to it. This uses a custom plugin marketplace. `MogooStudio/mogoo-codex-git` contains the source and the prebuilt plugin; installation and updates use this same GitHub repository. End users do not need to build the source. See the [plugin guide (Chinese)](codex/PLUGIN-README.md) for usage, updates, and removal.
+This uses a custom plugin marketplace. `MogooStudio/mogoo-codex-git` contains the source and the prebuilt plugin; installation and updates use this same GitHub repository. End users do not need to build the source. See the [plugin guide (Chinese)](codex/PLUGIN-README.md) for usage, updates, and removal.
 
 ## First use
 

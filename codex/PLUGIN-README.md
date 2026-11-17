@@ -1,6 +1,6 @@
 # mogoo-codex-git · Codex 插件
 
-作者：**mogoo** · 网站：[mogoo-codex-git](https://github.com/MogooStudio/mogoo-codex-git)
+作者：**mogoo** · 网站：[mogoo-codex-git](https://mogoostudio.github.io/mogoo-codex-git/)
 
 自动打开当前 Codex 聊天仓库或 worktree 的本地只读 Git 面板。包含提交关系图、分支与标签、工作区改动、文件差异及工作树信息。
 
@@ -8,7 +8,7 @@
 
 需要支持 `codex plugin` 命令的 Codex、Node.js 22.12+ 和 Git。插件内置已构建网页和服务，不需要 pnpm 或安装前端依赖。当前支持在 Windows 本机使用；其他平台未完成运行验证。
 
-仓库当前保持私有，先确保本机 Git 已获得访问权限，再从 GitHub 单仓库安装：
+从 GitHub 安装：
 
 ```powershell
 codex plugin marketplace add https://github.com/MogooStudio/mogoo-codex-git.git --ref main --json

@@ -1,11 +1,11 @@
 {
   "name": "mogoo-codex-git",
-  "version": "0.1.22",
+  "version": "0.1.23",
   "private": true,
   "type": "module",
   "license": "MIT",
   "author": "mogoo",
-  "homepage": "https://github.com/MogooStudio/mogoo-codex-git",
+  "homepage": "https://mogoostudio.github.io/mogoo-codex-git/",
   "repository": {
     "type": "git",
     "url": "https://github.com/MogooStudio/mogoo-codex-git.git"
