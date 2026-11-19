@@ -21,36 +21,40 @@ function hostFixture(hostCapabilities, messageResult = {}) {
   return { api, document, notify, messages, requests };
 }
 
-test('聊天指令只有显式调用才发送，草稿和直接发送使用不同的宿主参数', async () => {
-  const { api, messages } = hostFixture({ experimental: { 'openai/message': {} } });
-  assert.deepEqual(await api.messageCapabilities(), { draft: true, send: true });
+test('Git 常用语仅在显式调用后写入当前聊天草稿', async () => {
+  const { api, messages } = hostFixture({ message: { text: {} }, experimental: { 'openai/message': {} } });
+  assert.equal(await api.canFillDraft(), true);
   assert.deepEqual(messages(), []);
   const text = '分支 feature/abc 合并回 master，先不要推送';
-  const message = { role: 'user', content: [{ type: 'text', text }] };
-  assert.equal(await api.message(text, 'draft'), true);
-  assert.equal(await api.message(text, 'send'), true);
-  assert.deepEqual(messages(), [
-    { ...message, _meta: { 'openai/message': { target: 'active', send: false } } },
-    message,
-  ]);
+  assert.equal(await api.fillDraft(text), true);
+  assert.deepEqual(messages(), [{
+    role: 'user',
+    content: [{ type: 'text', text }],
+    _meta: { 'openai/message': { target: 'active', send: false } },
+  }]);
 });
 
-test('宿主不支持、面板隐藏或卸载时不会提交聊天消息', async () => {
-  const { api, document, notify, messages } = hostFixture({ message: { text: {} } });
-  assert.deepEqual(await api.messageCapabilities(), { draft: false, send: true });
-  assert.equal(await api.message('本地提交代码', 'draft'), false);
-  assert.equal(await api.message('  ', 'send'), false);
-  document.hidden = true;
-  assert.equal(await api.message('本地提交代码', 'send'), false);
-  document.hidden = false;
-  notify({ id: 'teardown', method: 'ui/resource-teardown' });
-  assert.equal(await api.message('本地提交代码', 'send'), false);
+test('仅支持应用消息的宿主不能填入聊天草稿', async () => {
+  const { api, messages } = hostFixture({ message: { text: {} } });
+  assert.equal(await api.canFillDraft(), false);
+  assert.equal(await api.fillDraft('本地提交代码'), false);
   assert.deepEqual(messages(), []);
 });
 
-test('宿主拒绝发送时返回失败，避免自动重试', async () => {
-  const { api, messages } = hostFixture({ message: { text: {} } }, { isError: true });
-  assert.equal(await api.message('本地提交代码', 'send'), false);
+test('草稿为空、面板隐藏或卸载时不会写入聊天草稿', async () => {
+  const { api, document, notify, messages } = hostFixture({ experimental: { 'openai/message': {} } });
+  assert.equal(await api.fillDraft('  '), false);
+  document.hidden = true;
+  assert.equal(await api.fillDraft('本地提交代码'), false);
+  document.hidden = false;
+  notify({ id: 'teardown', method: 'ui/resource-teardown' });
+  assert.equal(await api.fillDraft('本地提交代码'), false);
+  assert.deepEqual(messages(), []);
+});
+
+test('宿主拒绝填入草稿时返回失败，避免自动重试', async () => {
+  const { api, messages } = hostFixture({ experimental: { 'openai/message': {} } }, { isError: true });
+  assert.equal(await api.fillDraft('本地提交代码'), false);
   assert.equal(messages().length, 1);
 });
 

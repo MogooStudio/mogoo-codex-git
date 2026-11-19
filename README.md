@@ -49,7 +49,7 @@ After switching chats or worktrees, open the panel from the corresponding chat. 
 - Rename-aware file history and line attribution for committed code.
 - Worktree overview and read-only Stash snapshots.
 - Codex theme integration, manual light/dark themes, and local refresh every 15 seconds while the panel is visible.
-- Git phrases (Git 常用语): choose a natural-language request, copy it, insert it into the chat draft, or send it to Codex after confirmation. The browser view supports copying; draft and send actions use the native Codex panel.
+- Git phrases (Git 常用语): choose a request and copy it. The native Codex panel can also insert the request into the chat draft.
 
 ## Git browsing and data handling
 

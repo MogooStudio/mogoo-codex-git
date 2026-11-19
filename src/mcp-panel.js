@@ -62,22 +62,23 @@ export function createPanelApi(win, onTheme) {
     return result.structuredContent;
   }
 
-  async function messageCapabilities() {
+  async function canFillDraft() {
     const host = await connect();
     const extension = host?.experimental?.['openai/message'];
-    const text = host?.message?.text;
-    const draft = Boolean(extension && typeof extension === 'object');
-    return { draft, send: draft || Boolean(text && typeof text === 'object') };
+    return Boolean(extension && typeof extension === 'object');
   }
 
   return {
     call,
-    messageCapabilities,
-    async message(text, mode) {
-      const capabilities = await messageCapabilities();
-      if (closed || win.document.hidden || (mode !== 'draft' && mode !== 'send') || !capabilities[mode] || !text.trim()) return false;
-      const params = { role: 'user', content: [{ type: 'text', text }] };
-      if (mode === 'draft') params._meta = { 'openai/message': { target: 'active', send: false } };
+    canFillDraft,
+    async fillDraft(text) {
+      const supported = await canFillDraft();
+      if (closed || win.document.hidden || !supported || !text.trim()) return false;
+      const params = {
+        role: 'user',
+        content: [{ type: 'text', text }],
+        _meta: { 'openai/message': { target: 'active', send: false } },
+      };
       const result = await request('ui/message', params, AbortSignal.timeout(10000));
       return !result?.isError;
     },

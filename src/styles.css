@@ -194,7 +194,6 @@
 .git-command-actions button{min-height:30px;padding:4px 9px;border:1px solid var(--line);border-radius:4px}
 .git-command-actions button:hover:enabled,.git-command-draft{background:var(--selected)}
 .git-command-actions .git-command-draft{color:var(--menu-accent)}
-.git-command-actions .git-command-confirm{color:var(--del-fg)}
 .git-command-notice{margin:8px 0 0;color:var(--muted)}
 .git-command-notice:empty{margin:0}
 @media(max-width:1100px){.git-command-popover{top:52px;max-height:calc(100dvh - 64px)}}

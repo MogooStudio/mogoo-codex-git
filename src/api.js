@@ -4,7 +4,7 @@ import { setHostTheme } from './theme.js';
 
 export const isCodexPanel = document.documentElement.hasAttribute('data-mcp-app');
 const panelApi = isCodexPanel ? createPanelApi(window, setHostTheme) : null;
-export const chatMessage = panelApi && { capabilities: panelApi.messageCapabilities, submit: panelApi.message };
+export const chatDraft = panelApi && { supported: panelApi.canFillDraft, fill: panelApi.fillDraft };
 const browserToken = new URLSearchParams(window.location.search).get('token') || '';
 
 export async function api(endpoint, params, signal) {
