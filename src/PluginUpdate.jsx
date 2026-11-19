@@ -7,8 +7,8 @@ function statusText(info) {
   if (info?.pending) return '新版已安装，新开聊天或重启 Codex 后生效。';
   if (info?.checking) return '正在检查更新…';
   if (info?.operation?.state === 'error') return info.operation.message;
-  if (info?.available) return info.canInstall ? `发现 v${info.target}。Codex 可能已在后台更新。` :
-    `发现 v${info.target}。可查看手动更新命令。`;
+  if (info?.available) return info.canInstall ? `有新版本 v${info.target}，可以更新。` :
+    `有新版本 v${info.target}，可使用下方命令更新。`;
   if (info?.remoteStatus === 'unavailable') return '暂时无法读取发行版本，请稍后再试。';
   if (info?.dismissed) return `已忽略 v${info.target}。`;
   if (info?.latest) return '当前已是最新版本。';
@@ -19,11 +19,12 @@ export function PluginUpdate() {
   const [info, setInfo] = useState(null);
   const [busy, setBusy] = useState('');
   const [notice, setNotice] = useState('');
+  const [statusUnavailable, setStatusUnavailable] = useState(false);
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
   const [autoChoice, setAutoChoice] = useState(null);
   const lifecycle = useRef(null), inFlight = useRef(null);
-  const dialog = useRef(null), trigger = useRef(null), cancel = useRef(null);
+  const dialog = useRef(null), trigger = useRef(null), cancel = useRef(null), updateButton = useRef(null);
 
   const request = useCallback(async (action, values = {}) => {
     const signal = lifecycle.current?.signal;
@@ -36,9 +37,14 @@ export function PluginUpdate() {
     if (interactive) { setBusy(action); setNotice(''); }
     try {
       const data = await api('update', { action, ...values }, requestSignal);
-      if (!requestSignal.aborted) setInfo(data);
+      if (!requestSignal.aborted) {
+        setInfo(data);
+        setStatusUnavailable(false);
+      }
     } catch (error) {
-      if (!requestSignal.aborted && interactive) setNotice(error.name === 'TimeoutError' ? '请求超时，请查看更新状态后重试。' : error.message);
+      if (requestSignal.aborted) return;
+      if (interactive) setNotice(error.name === 'TimeoutError' ? '请求超时，请查看更新状态后重试。' : error.message);
+      else if (action === 'status') setStatusUnavailable(true);
     } finally {
       if (inFlight.current === token) inFlight.current = null;
       if (!signal.aborted && interactive) setBusy('');
@@ -77,8 +83,10 @@ export function PluginUpdate() {
     info?.operation?.state === 'error' ? '更新未完成' : `v${version}`;
   const commands = info?.commands?.join('\n');
   const manual = commands && !info?.pending && (info?.available || info?.operation?.state === 'error');
-  const versions = [['运行中', version], ['已安装', info?.installed],
-    ['市场快照', info?.snapshot], ['远端', info?.latest]];
+  const additionalVersions = [['已安装', info?.installed], ['市场快照', info?.snapshot]]
+    .filter(([, value]) => value && value !== version);
+  const stateLabel = busy === 'check' ? '正在检查更新…' :
+    statusUnavailable && !info ? '暂时无法读取版本。可点击「立即检查」重试。' : statusText(info);
 
   const show = () => {
     setNotice('');
@@ -95,6 +103,10 @@ export function PluginUpdate() {
     const target = confirmation.target;
     setConfirmation(null);
     void request('install', { target, confirmed: true });
+  };
+  const cancelConfirmation = () => {
+    setConfirmation(null);
+    requestAnimationFrame(() => updateButton.current?.focus());
   };
   const setAuto = async enabled => {
     setAutoChoice(enabled);
@@ -120,22 +132,32 @@ export function PluginUpdate() {
       title="插件更新" onClick={show}>{label}</button>
     <dialog className="plugin-update-dialog" id="plugin-update-dialog" ref={dialog} aria-labelledby="plugin-update-title"
       onClose={close} onCancel={event => {
-        if (confirmation) { event.preventDefault(); setConfirmation(null); }
+        if (confirmation) { event.preventDefault(); cancelConfirmation(); }
       }}>
       {confirmation ? <>
         <h2 id="plugin-update-title">确认更新到 v{confirmation.target}？</h2>
         <p>Codex 会跳过已经完成的步骤。新版安装后，新开聊天或重启 Codex 后生效。</p>
-        <pre>{confirmation.commands}</pre>
+        {confirmation.commands && <details>
+          <summary>查看将运行的命令</summary>
+          <pre>{confirmation.commands}</pre>
+        </details>}
         <div className="plugin-update-actions">
-          <button type="button" ref={cancel} onClick={() => setConfirmation(null)}>取消</button>
+          <button type="button" ref={cancel} onClick={cancelConfirmation}>取消</button>
           <button type="button" className="plugin-update-primary" onClick={confirm}>确认更新</button>
         </div>
       </> : <>
         <h2 id="plugin-update-title">插件更新</h2>
+        <p className="plugin-update-status" role="status">{stateLabel}</p>
         <dl className="plugin-update-versions">
-          {versions.map(([name, value]) => <div key={name}><dt>{name}</dt><dd>{value ? `v${value}` : '未知'}</dd></div>)}
+          <div><dt>当前版本</dt><dd>v{version}</dd></div>
+          <div><dt>最新版本</dt><dd>{info?.latest ? `v${info.latest}` : '待检查'}</dd></div>
         </dl>
-        <p role="status">{busy === 'check' ? '正在检查更新…' : statusText(info)}</p>
+        {additionalVersions.length > 0 && <details className="plugin-update-version-details">
+          <summary>更多版本信息</summary>
+          <dl className="plugin-update-versions">
+            {additionalVersions.map(([name, value]) => <div key={name}><dt>{name}</dt><dd>v{value}</dd></div>)}
+          </dl>
+        </details>}
         <div className="plugin-update-options">
           {isCodexPanel && <label>
             <input type="checkbox" checked={autoChoice ?? info?.autoCheck ?? true} disabled={!info || Boolean(busy)}
@@ -150,12 +172,14 @@ export function PluginUpdate() {
           <button type="button" onClick={copy}>复制命令</button>
         </details>}
         <p className="plugin-update-notice" role="status" hidden={!notice}>{notice}</p>
-        <div className="plugin-update-actions">
+        <div className="plugin-update-links">
           {info?.changelog && <button type="button" onClick={changelog}>查看更新内容</button>}
           {isCodexPanel && info?.available && !installing && <button type="button" disabled={Boolean(busy)}
             onClick={() => void request('dismiss', { target: info.target })}>忽略此版本</button>}
+        </div>
+        <div className="plugin-update-actions">
           <button type="button" onClick={() => dialog.current.close()}>关闭</button>
-          {info?.canInstall && <button type="button" className="plugin-update-primary" disabled={Boolean(busy)}
+          {info?.canInstall && <button type="button" ref={updateButton} className="plugin-update-primary" disabled={Boolean(busy)}
             onClick={() => setConfirmation({ target: info.target, commands })}>立即更新</button>}
         </div>
       </>}

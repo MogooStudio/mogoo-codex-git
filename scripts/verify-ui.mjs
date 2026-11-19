@@ -40,15 +40,15 @@ try {
   await page.locator('.theme-dark').click(); await theme('dark');
   await page.reload(); await loaded(); await theme('dark');
   await page.getByRole('button', {name:'工作树', exact:true}).click();
-  assert.match(await page.locator('.worktree-table').innerText(), /当前聊天/);
-  await page.getByRole('button', {name:'源码', exact:true}).click();
+  assert.match(await page.locator('.worktree-list').innerText(), /当前聊天/);
+  await page.getByRole('button', {name:'改动', exact:true}).click();
   await page.locator('.changes-view .patch').first().waitFor();
   await page.setViewportSize({width:760,height:1000});
   assert.equal(await page.locator('.sidebar').isVisible(), false);
   await page.getByText('更改文件', {exact:true}).click();
   await page.locator('.file-menu-popup .status-\\?').first().locator('..').click();
   await page.locator('.changes-view .patch').waitFor();
-  await page.getByRole('button', {name:'分支',exact:true}).click(); await loaded();
+  await page.getByRole('button', {name:'历史',exact:true}).click(); await loaded();
   assert.equal(await page.locator('.log').evaluate(el => el.getBoundingClientRect().width),230);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),true);
   await page.getByRole('button', { name: '界面主题' }).press('Enter');

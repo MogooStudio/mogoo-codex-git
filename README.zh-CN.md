@@ -38,7 +38,7 @@ codex plugin list --marketplace mogoo-codex-plugin --json
 
 1. 在 Codex 中打开一个 Git 项目的聊天。
 2. 点击聊天右侧的 **Git 面板**，或说“用 mogoo-codex-git 打开当前聊天的 Git 面板”。
-3. 进入「源码」，点开一个变更文件，查看具体差异。
+3. 进入「改动」，点开一个变更文件，查看具体差异。
 
 切换聊天或 worktree 后，在对应聊天重新打开面板。插件未显示时，新开聊天，必要时重启 Codex。没有 Git 仓库时会显示空状态，不会替你初始化仓库。
 

@@ -22,11 +22,11 @@ try {
   assert.equal(await page.locator('.branch').getAttribute('title'), branch);
   for (const width of [1600, 1100, 760, 601, 390]) {
     await page.setViewportSize({ width, height: 1000 });
-    const controls = await page.locator('.toolbar-actions button').evaluateAll(buttons => buttons.map(button => {
+    const controls = await page.locator('.toolbar-actions button:visible').evaluateAll(buttons => buttons.map(button => {
       const rect = button.getBoundingClientRect();
       return { left: rect.left, right: rect.right, width: rect.width };
     }));
-    assert.ok(controls.every(rect => rect.width > 0 && rect.left >= 0 && rect.right <= width), `toolbar clipped at ${width}px`);
+    assert.ok(controls.length >= 3 && controls.every(rect => rect.width > 0 && rect.left >= 0 && rect.right <= width), `toolbar clipped at ${width}px`);
     assert.equal(await page.locator('.branch-name').isVisible(), true);
     if (width > 600) assert.ok(await page.locator('.branch-name').evaluate(el => el.scrollWidth > el.clientWidth && getComputedStyle(el).textOverflow === 'ellipsis'));
     await page.getByRole('button', { name: '界面主题' }).click();
@@ -38,7 +38,7 @@ try {
   }
   await page.getByRole('button', { name: '刷新', exact: true }).click();
   await page.getByRole('button', { name: '刷新', exact: true }).isEnabled();
-  await page.getByRole('button', { name: '源码', exact: true }).click();
+  await page.getByRole('button', { name: '改动', exact: true }).click();
   const raw = page.locator('.changes-view .raw-diff');
   await raw.waitFor();
   assert.equal(await raw.textContent(), patch.slice(0, -1));

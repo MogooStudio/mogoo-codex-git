@@ -1,4 +1,4 @@
-import React, { useId, useRef, useState } from 'react';
+import React, { useId, useLayoutEffect, useRef, useState } from 'react';
 import { MessageSquare } from 'lucide-react';
 import { chatDraft } from './api.js';
 
@@ -17,7 +17,7 @@ const fields = {
 
 export function GitCommandPicker({ refs, ready }) {
   const id = useId();
-  const picker = useRef(null), inFlight = useRef(false);
+  const picker = useRef(null), fieldInput = useRef(null), inFlight = useRef(false);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(0);
   const [values, setValues] = useState({ task: '', branch: '' });
@@ -31,6 +31,9 @@ export function GitCommandPicker({ refs, ready }) {
   const [before, after] = field ? template.text.split('XXX') : [template.text];
   const text = field ? value && before + value + after : before;
   const branches = [...new Set(refs.filter(ref => ref.kind === 'local').map(ref => ref.label))];
+  useLayoutEffect(() => {
+    if (open) fieldInput.current?.focus({ preventScroll: true });
+  }, [open, selected]);
 
   const choose = index => {
     setSelected(index);
@@ -40,7 +43,10 @@ export function GitCommandPicker({ refs, ready }) {
   const toggle = event => {
     const visible = event.currentTarget.matches(':popover-open');
     setOpen(visible);
-    if (!visible) return;
+    if (!visible) {
+      if (delivery?.status !== 'unknown') setNotice('');
+      return;
+    }
     if (delivery?.status === 'sent') {
       setNotice('');
       setDelivery(null);
@@ -74,8 +80,7 @@ export function GitCommandPicker({ refs, ready }) {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(text);
-      setNotice('');
-      picker.current?.hidePopover();
+      setNotice('已复制指令');
     } catch { setNotice('可选中预览文本手动复制'); }
   };
 
@@ -85,22 +90,20 @@ export function GitCommandPicker({ refs, ready }) {
       <MessageSquare aria-hidden="true" />
     </button>
     <section className="git-command-popover" id={id} ref={picker} popover="auto" role="dialog"
-      aria-labelledby={`${id}-title`} aria-describedby={`${id}-description`} onToggle={toggle}>
+      aria-labelledby={`${id}-title`} onToggle={toggle}>
       <header className="git-command-heading">
         <MessageSquare aria-hidden="true" /><h2 id={`${id}-title`}>Git 常用语</h2>
       </header>
-      <p id={`${id}-description`} className="git-command-description">选一句常用描述，按需修改后发给 Codex</p>
       <div role="group" aria-label="常用语列表">
         {templates.map((item, index) => <button key={item.title} type="button" className="git-command-option"
           aria-pressed={selected === index} disabled={busy} onClick={() => choose(index)}>
-          <span className="git-command-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
           <span>{item.title}</span>
           {item.field && <small aria-hidden="true">填{fields[item.field].label}</small>}
         </button>)}
       </div>
       <div className="git-command-form">
         {field && <label>{field.label}
-          <input value={values[template.field]} placeholder={field.placeholder} autoComplete="off"
+          <input ref={fieldInput} value={values[template.field]} placeholder={field.placeholder} autoComplete="off"
             list={template.field === 'branch' && branches.length ? `${id}-branches` : undefined}
             disabled={busy} onChange={event => {
               setValues(previous => ({ ...previous, [template.field]: event.target.value }));
@@ -111,14 +114,14 @@ export function GitCommandPicker({ refs, ready }) {
         {template.field === 'branch' && branches.length > 0 && <datalist id={`${id}-branches`}>
           {branches.map(branch => <option key={branch} value={branch} />)}
         </datalist>}
-        <div id={`${id}-preview`} className="git-command-preview-label">发给 Codex 的内容</div>
+        <div id={`${id}-preview`} className="git-command-preview-label">{canFillDraft ? '聊天草稿预览' : '指令预览'}</div>
         <p className="git-command-preview" aria-labelledby={`${id}-preview`}>{text || <>{before}<mark>〈{field.label}〉</mark>{after}</>}</p>
         <div className="git-command-actions">
           <button type="button" disabled={!text || busy} onClick={copy}>复制</button>
           {canFillDraft && <button type="button" className="git-command-draft" onClick={() => void fillDraft()}
             disabled={!ready || !text || busy || blocked}>{busy ? '正在填入…' : '填入聊天'}</button>}
         </div>
-        <p className="git-command-notice" role="status">{notice || (!ready && canFillDraft ? '关联当前聊天的仓库后即可发送' : '')}</p>
+        <p className="git-command-notice" role="status">{notice || (!ready && canFillDraft ? '关联仓库后可填入聊天' : '')}</p>
       </div>
     </section>
   </>;

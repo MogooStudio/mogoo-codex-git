@@ -48,11 +48,12 @@ try {
   };
 
   await nav.waitFor();
-  assert.deepEqual(await nav.getByRole('button').allTextContents(), ['源码', '分支', '工作树', 'Stash']);
+  assert.deepEqual(await nav.getByRole('button').evaluateAll(buttons => buttons.map(button => button.getAttribute('aria-label'))),
+    ['改动', '历史', '工作树', 'Stash']);
   assert.equal(await page.getByRole('button', { name: '与 HEAD 比较' }).count(), 0);
   await view('工作树').click();
-  await expectText(page.locator('.worktree-table'), /当前聊天/);
-  await view('源码').click();
+  await expectText(page.locator('.worktree-list'), /当前聊天/);
+  await view('改动').click();
   await expectText(patch, /uncommitted/);
 
   await page.getByRole('button', { name: '文件历史', exact: true }).click();
@@ -74,16 +75,16 @@ try {
   await expectText(patch, /uncommitted/);
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await view('分支').click();
+  await view('历史').click();
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
 
   await view('Stash').click();
   assert.equal(await view('Stash').getAttribute('aria-current'), 'page');
   await expectText(patch, /working/);
-  const snapshot = page.getByRole('combobox', { name: 'Stash 快照' });
-  await snapshot.selectOption('index');
+  const snapshot = page.getByRole('group', { name: 'Stash 快照' });
+  await snapshot.getByRole('button', { name: '已暂存', exact: true }).click();
   await expectText(patch, /staged/);
-  await snapshot.selectOption('untracked');
+  await snapshot.getByRole('button', { name: '未跟踪', exact: true }).click();
   await expectText(patch, /saved untracked content/);
   assert.equal(await page.getByRole('button', { name: '行归属' }).count(), 0);
 
@@ -108,7 +109,7 @@ try {
   const frame = page.frameLocator('iframe');
   await expectText(frame.locator('.branch-name'), /^main$/);
   await frame.getByRole('button', { name: 'Stash', exact: true }).click();
-  await frame.getByRole('combobox', { name: 'Stash 快照' }).selectOption('untracked');
+  await frame.getByRole('group', { name: 'Stash 快照' }).getByRole('button', { name: '未跟踪', exact: true }).click();
   await expectText(frame.locator('.patch:visible'), /saved untracked content/);
   assert.deepEqual(errors, []);
   assert.equal(git('rev-parse', 'HEAD'), head);

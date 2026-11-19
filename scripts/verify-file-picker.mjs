@@ -20,7 +20,14 @@ try {
   await page.goto(`${base}/?${new URLSearchParams({ cwd: process.cwd(), token: process.env.UI_AUTH_TOKEN || '' })}`);
   const trigger = page.locator('.file-menu summary:visible');
   await trigger.waitFor();
-  for (const [width, height] of [[390,600], [390,500], [760,420], [1036,1000]]) {
+  await page.locator('.commit.active').click();
+  await trigger.click();
+  const commitFilter = page.locator('.file-menu-popup').getByRole('textbox', { name: '按文件名或路径筛选' });
+  await commitFilter.fill('FILE-59');
+  assert.equal(await page.locator('.file-menu-list button').count(), 1);
+  await commitFilter.press('Enter');
+  assert.match(await trigger.innerText(), /file-59/);
+  for (const [width, height] of [[390,600], [390,500], [760,420], [1036,1000], [1440,900], [1036,900]]) {
     await page.setViewportSize({ width, height });
     await trigger.click();
     const last = page.locator('.file-menu-list button').last();
@@ -48,7 +55,7 @@ try {
   await page.keyboard.press('Control+f');
   assert.equal(await page.locator('.history-content .diff-find').count(), 0);
 
-  await page.getByRole('button', {name:'源码',exact:true}).click();
+  await page.getByRole('button', {name:'改动',exact:true}).click();
   await page.getByRole('button', {name:'1 个冲突',exact:true}).click();
   await page.getByText('此文件存在合并冲突。', {exact:true}).waitFor();
   assert.match(await page.locator('.diff-title').innerText(), /conflict\.js/);
@@ -90,9 +97,9 @@ try {
   await page.getByRole('button', {name:'左右对照'}).click();
   await page.setViewportSize({width:588,height:880});
   await page.getByRole('button', {name:'左右对照'}).waitFor({state:'hidden'});
-  await page.getByRole('button', {name:'分支',exact:true}).click();
+  await page.getByRole('button', {name:'历史',exact:true}).click();
   await page.locator('.history-content').waitFor();
-  await page.getByRole('button', {name:'源码',exact:true}).click();
+  await page.getByRole('button', {name:'改动',exact:true}).click();
   assert.match(await page.locator('.diff-title:visible').innerText(), /file-59\.js/);
   assert.deepEqual(errors, []);
   console.log('PASS: commit picker keyboard/resize, branch diff tools hidden, grouped changes and conflict jump, narrow/wide path filtering, line clipboard.');

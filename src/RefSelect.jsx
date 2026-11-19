@@ -56,13 +56,15 @@ export default function RefSelect({ refs, hasHead, currentBranch, value, onChang
 
   let offset = 0;
   return <div className="scope" ref={root} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }}>
-    <button type="button" ref={trigger} className="scope-trigger" role="combobox" aria-label="提交范围" aria-haspopup="listbox"
+    <button type="button" ref={trigger} className="scope-trigger" role="combobox" aria-label="提交范围" aria-description={label} aria-haspopup="listbox"
       aria-expanded={open} aria-controls={open ? `${id}-list` : undefined} title={label} onClick={() => open ? close() : show()}
       onKeyDown={event => {
         if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); show(); }
       }}>
       <ListFilter aria-hidden="true" /><span>{label}</span><ChevronDown aria-hidden="true" />
     </button>
+    {value && <button className="scope-reset" type="button" aria-label="清除提交范围筛选" title="清除筛选，显示所有分支与标签"
+      onClick={() => { onChange(''); close(); }}><X aria-hidden="true" /></button>}
     {open && <div className="scope-menu">
       <label className="search scope-search"><Search /><input ref={input} placeholder="搜索分支或标签" aria-label="搜索分支或标签"
         value={query} onChange={event => { setQuery(event.target.value); setActive(0); }}

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { Check, ChevronDown, ExternalLink, FileCode2, Folder, Layers, LoaderCircle, Network, Palette, RefreshCw, X } from 'lucide-react';
+import { Check, ChevronDown, ExternalLink, FileCode2, Folder, Layers, LoaderCircle, Monitor, Moon, Network, Palette, RefreshCw, Sun, X } from 'lucide-react';
 import { api, isCodexPanel, openPanelLink, useResource } from './api.js';
 import { Sidebar, CommitList, CommitInspector, Changes, Worktrees, Message } from './components.jsx';
 import { BranchIcon as GitBranch } from './icons.jsx';
@@ -11,16 +11,17 @@ import { ResizableWorkspace } from './ResizableWorkspace.jsx';
 import { PluginUpdate } from './PluginUpdate.jsx';
 import { GitCommandPicker } from './GitCommandPicker.jsx';
 
-const views = [['source', '源码', FileCode2], ['history', '分支', GitBranch],
+const views = [['source', '改动', FileCode2], ['history', '历史', GitBranch],
   ['worktrees', '工作树', Network], ['stashes', 'Stash', Layers]];
 
 function ThemePicker({ mode, followLabel, onChange }) {
   const [open, setOpen] = useState(false);
-  const root = useRef(null), trigger = useRef(null);
-  const choices = [['follow', followLabel], ['light', '浅色'], ['dark', '深色']];
+  const root = useRef(null), trigger = useRef(null), options = useRef(null);
+  const choices = [['follow', followLabel, Monitor], ['light', '浅色', Sun], ['dark', '深色', Moon]];
   const label = choices.find(([id]) => id === mode)[1];
   useEffect(() => {
     if (!open) return;
+    options.current?.querySelector('[aria-pressed="true"]')?.focus({ preventScroll: true });
     const dismiss = event => { if (!root.current?.contains(event.target)) setOpen(false); };
     document.addEventListener('pointerdown', dismiss);
     return () => document.removeEventListener('pointerdown', dismiss);
@@ -29,16 +30,24 @@ function ThemePicker({ mode, followLabel, onChange }) {
     if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
   }} onKeyDown={event => {
     if (event.key === 'Escape' && open) { event.preventDefault(); setOpen(false); trigger.current?.focus(); }
+    if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    if (!open) { setOpen(true); return; }
+    const buttons = [...options.current.querySelectorAll('button')];
+    const index = buttons.indexOf(document.activeElement);
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 :
+      (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length;
+    buttons[next]?.focus();
   }}>
     <button className="theme-trigger" ref={trigger} aria-label="界面主题" aria-expanded={open} title={label} onClick={() => setOpen(!open)}>
       <Palette /><span>{mode === 'follow' ? '跟随' : label}</span><ChevronDown className="theme-chevron" />
     </button>
-    {open && <div className="theme-options" role="group" aria-label="主题选项">
-      {choices.map(([id, name]) => <button key={id} className={`theme-${id}`} aria-pressed={id === mode} onClick={() => {
+    {open && <div ref={options} className="theme-options" role="group" aria-label="主题选项">
+      {choices.map(([id, name, Icon]) => <button key={id} className={`theme-${id}`} aria-pressed={id === mode} onClick={() => {
         onChange(id);
         setOpen(false);
         trigger.current?.focus();
-      }}><span>{name}</span>{id === mode && <Check />}</button>)}
+      }}><Icon aria-hidden="true" /><span>{name}</span>{id === mode && <Check aria-hidden="true" />}</button>)}
     </div>}
   </div>;
 }
@@ -49,17 +58,40 @@ function RepositoryWorkspace({ repo }) {
   const [limit, setLimit] = useState(100);
   const [selection, setSelection] = useState('');
   const [inspecting, setInspecting] = useState(true);
+  const [compactDetailOpen, setCompactDetailOpen] = useState(false);
+  const historyView = useRef(null);
+  const restoreCommitFocus = useRef(false);
   const [sourceOpened, setSourceOpened] = useState(false);
   const [search, setSearch] = useState('');
+  const [historyRetry, setHistoryRetry] = useState(0);
+  const [stashSelection, setStashSelection] = useState({ oid: '', part: 'tracked' });
   const [fileSelection, setFileSelection] = useState({ mode: 'unstaged', path: '' });
   const groups = useMemo(() => changeGroups(repo.files), [repo.files]);
   const mode = groups[fileSelection.mode].length ? fileSelection.mode :
     ['conflict', 'unstaged', 'staged', 'untracked'].find(id => groups[id].length) || 'unstaged';
   const file = groups[mode].find(f => f.path === fileSelection.path) || groups[mode][0];
   const validFilter = (filter === 'HEAD' ? repo.head : repo.refs.some(ref => ref.name === filter)) ? filter : '';
-  const historyRevision = useMemo(() => JSON.stringify([repo.head, repo.refs.map(ref => [ref.name, ref.oid])]), [repo.head, repo.refs]);
+  const historyRevision = useMemo(() => JSON.stringify([historyRetry, repo.head, repo.refs.map(ref => [ref.name, ref.oid])]),
+    [historyRetry, repo.head, repo.refs]);
   const { data, error, loading } = useResource('history', { path: repo.root, ref: validFilter, limit }, historyRevision, JSON.stringify([repo.root, validFilter]));
-  const selected = data?.commits.some(c => c.oid === selection) ? selection : data?.commits[0]?.oid;
+  const defaultSelection = !validFilter && data?.commits.find(commit => commit.oid === repo.head)?.oid;
+  const selected = data?.commits.some(commit => commit.oid === selection) ? selection : defaultSelection || data?.commits[0]?.oid;
+  const showInspector = inspecting && Boolean(selected);
+  const showCompactDetail = showInspector && compactDetailOpen && selection === selected;
+  useLayoutEffect(() => {
+    if (compactDetailOpen || !restoreCommitFocus.current) return;
+    restoreCommitFocus.current = false;
+    historyView.current?.querySelector(`[data-oid="${selected}"]`)?.focus();
+  }, [compactDetailOpen, selected]);
+  const openCommit = oid => {
+    setSelection(oid);
+    setInspecting(true);
+    setCompactDetailOpen(true);
+  };
+  const returnToHistory = () => {
+    restoreCommitFocus.current = true;
+    setCompactDetailOpen(false);
+  };
   const openSource = () => { setSourceOpened(true); setView('source'); };
   const selectFile = (mode, path) => { setFileSelection({ mode, path }); openSource(); };
   return <ResizableWorkspace source={view === 'source'} sidebar={
@@ -68,26 +100,38 @@ function RepositoryWorkspace({ repo }) {
     <main className="main">
       <nav className="tabs" aria-label="仓库导航">
         {views.map(([id, label, Icon]) => <button key={id} className={view === id ? 'active' : ''}
+          aria-label={label} aria-description={id === 'source' ? `${repo.files.length} 个改动文件` : undefined}
           aria-current={view === id ? 'page' : undefined} onClick={() => id === 'source' ? openSource() : setView(id)}>
-          <Icon />{label}
+          <Icon aria-hidden="true" />{label}
+          {id === 'source' && repo.files.length > 0 && <span className="tab-count" aria-hidden="true">{repo.files.length > 99 ? '99+' : repo.files.length}</span>}
         </button>)}
         {view === 'history' && <RefSelect refs={repo.refs} hasHead={Boolean(repo.head)} currentBranch={repo.branch} value={validFilter}
-          onChange={value => { setFilter(value); setLimit(100); setSelection(''); setInspecting(true); }} />}
+          onChange={value => {
+            setFilter(value);
+            setLimit(100);
+            setSelection('');
+            setInspecting(true);
+            setCompactDetailOpen(false);
+          }} />}
       </nav>
-      <div className={`history-content ${inspecting && selected ? '' : 'history-only'}`} hidden={view !== 'history'}>
+      <div ref={historyView} className={`history-content ${showInspector ? '' : 'history-only'} ${showCompactDetail ? 'compact-history-detail' : ''}`}
+        hidden={view !== 'history'}>
         <section className="log">
-          {loading && !data ? <Message>正在读取提交记录…</Message> : error ? <Message error>{error}</Message> :
+          {error && <Message error compact={Boolean(data)} onRetry={() => setHistoryRetry(n => n + 1)}>{error}</Message>}
+          {loading && !data && <Message>正在读取提交记录…</Message>}
+          {(data || (!loading && !error)) &&
             <CommitList data={data} loading={loading} repo={repo} selected={inspecting ? selected : null}
-              onSelect={oid => { setSelection(oid); setInspecting(true); }}
+              onSelect={openCommit}
               search={search} setSearch={setSearch}
               loadMore={() => setLimit(n => Math.min(2000, n + 100))} />}
         </section>
-        {inspecting && selected && <CommitInspector repoPath={repo.root} oid={selected}
-          onClose={() => setInspecting(false)} showReviewTools={false} />}
+        {showInspector && <CommitInspector repoPath={repo.root} oid={selected}
+          onClose={() => { setInspecting(false); setCompactDetailOpen(false); }}
+          onBack={showCompactDetail ? returnToHistory : undefined} showReviewTools={false} />}
       </div>
       {sourceOpened && <Changes hidden={view !== 'source'} repo={repo} groups={groups} mode={mode} file={file} onSelect={selectFile} />}
       {view === 'worktrees' && <Worktrees repo={repo} />}
-      {view === 'stashes' && <StashesView repo={repo} />}
+      {view === 'stashes' && <StashesView repo={repo} selection={stashSelection} onSelect={setStashSelection} />}
     </main>
   </ResizableWorkspace>;
 }
@@ -153,9 +197,9 @@ export default function App() {
   }, [watching, loadChat]);
   const empty = {
     unbound: ['等待当前聊天关联', '在当前 Codex 聊天中说“打开 Git 面板”，即可自动关联仓库。'],
-    'no-repository': ['当前聊天没有 Git 仓库', '此聊天的工作目录不是 Git 仓库，也没有可读取的 worktree。'],
-    missing: ['当前聊天的目录不可用', '工作目录可能已移动或删除。请在聊天中重新打开 Git 面板。'],
-    error: ['无法读取当前聊天的仓库', '请检查上方错误提示，或点击刷新重试。'],
+    'no-repository': ['当前聊天没有 Git 仓库', '在关联 Git 仓库的聊天里打开面板，即可查看改动和历史。'],
+    missing: ['当前聊天的目录不可用', '确认工作目录仍存在后，重试读取。'],
+    error: ['无法读取当前聊天的仓库', '重试读取，或从该仓库的聊天重新打开面板。'],
   }[context.state] || ['正在关联当前聊天…', '正在读取当前聊天的工作目录。'];
   const repoName = repo?.name || 'Mogoo Codex Git';
   const repoPath = repo?.root || context.root || context.cwd;
@@ -179,8 +223,8 @@ export default function App() {
     finally { browserPending.current = false; setOpeningBrowser(false); }
   };
   return <div className="app-shell"><header className="toolbar"><span className="project" title={repoPath || repoName}><Folder /><span>{repoName}</span></span>{repo && <span className="branch" title={branch}><GitBranch /><span className="branch-name">{branch}</span></span>}<div className="toolbar-actions">
-    <label className="auto">
-      <input type="checkbox" disabled={!repo} checked={auto} onChange={e => setAuto(e.target.checked)} />
+    <label className="auto" title="面板可见时每 15 秒刷新 Git 状态">
+      <input type="checkbox" aria-label="自动刷新" disabled={!repo} checked={auto} onChange={e => setAuto(e.target.checked)} />
       <span>自动刷新</span>
     </label>
     {isCodexPanel && <button className="toolbar-icon" aria-label="浏览器打开" title="在 Codex 右侧浏览器打开当前仓库"
@@ -192,7 +236,14 @@ export default function App() {
     <ThemePicker mode={themeMode} followLabel={followLabel} onChange={selectTheme} />
     </div></header>
     {(error || browserError) && <div className="error-banner" role="alert"><span>{error || browserError}</span><button className="icon-button" aria-label="关闭错误提示" onClick={() => { setError(''); setBrowserError(''); }}><X /></button></div>}
-    {repo ? <RepositoryWorkspace key={repo.root} repo={repo} /> : <main className="welcome"><Folder size={32} /><h1>{loading ? '正在关联当前聊天…' : empty[0]}</h1><p>{empty[1]}</p>{context.cwd && <code>{context.cwd}</code>}</main>}
+    {repo ? <RepositoryWorkspace key={repo.root} repo={repo} /> : <main className="welcome">
+      {loading ? <LoaderCircle className="spinning" size={28} aria-hidden="true" /> : <Folder size={28} aria-hidden="true" />}
+      <h1>{loading ? '正在关联当前聊天…' : empty[0]}</h1>
+      <p>{loading ? '正在读取当前聊天的工作目录。' : empty[1]}</p>
+      {context.cwd && <code title={context.cwd}>{context.cwd}</code>}
+      {!loading && ['error', 'missing'].includes(context.state) &&
+        <button type="button" className="panel-action welcome-retry" onClick={() => loadChat()}>重试读取仓库</button>}
+    </main>}
     <footer className="footer">
       <i className={`status-dot ${watching && !failed && !loading ? 'observing' : ''}`} aria-hidden="true" />
       <span role="status" title={repo ? `${repo.root}\n${watching ? '可见时每 15 秒读取本地状态\n' : ''}最近刷新 ${new Date(repo.refreshedAt).toLocaleTimeString('zh-CN', {hour12:false})}` : ''}>{observation}</span>

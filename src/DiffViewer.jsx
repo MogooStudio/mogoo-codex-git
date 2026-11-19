@@ -25,10 +25,14 @@ function SearchText({ text, hits, active }) {
 
 function FileHistoryList({ repoPath, file, oid, onSelect }) {
   const [limit, setLimit] = useState(50);
-  const { data, loading, error } = useResource('file-history', { path: repoPath, file, oid, limit }, '', JSON.stringify([file, oid]));
+  const [retry, setRetry] = useState(0);
+  const { data, loading, error } = useResource('file-history', { path: repoPath, file, oid, limit }, retry, JSON.stringify([file, oid]));
   return <div className="file-history-list" role="region" aria-label="文件历史">
     <div className="file-history-heading"><strong>文件历史</strong><code title={file}>{file}</code></div>
-    {error ? <div className="tool-status" role="alert">{error}</div> : !data ? <div className="tool-status">正在读取文件历史…</div> :
+    {error && <div className="tool-status tool-error"><span role="alert">{error}</span>
+      <button className="panel-action retry-action" onClick={() => setRetry(n => n + 1)}>重试</button></div>}
+    {!data && !error && <div className="tool-status" role="status">正在读取文件历史…</div>}
+    {data && (
       !data.entries.length ? <div className="tool-status">这个路径还没有提交记录。</div> : <>
         {data.entries.map(entry => <button key={entry.oid} className="file-history-entry" onClick={() => onSelect(entry)}>
           <span>{entry.subject || '（无提交说明）'}</span>
@@ -41,13 +45,13 @@ function FileHistoryList({ repoPath, file, oid, onSelect }) {
         {data.hasMore && <button className="load-more" disabled={loading || limit >= 500} onClick={() => setLimit(n => Math.min(500, n + 50))}>
           {limit >= 500 ? '已显示最近 500 条' : loading ? '正在读取…' : '加载更多文件历史'}
         </button>}
-      </>}
+      </>)}
   </div>;
 }
 
 export function DiffViewer({
   repoPath, file: sourceFile, mode: sourceMode, oid: sourceOid, oldOid, revision, comparison, actions,
-  historyBase = sourceOid, readAttribution = true, sides, sourceView = false, filePosition, showReviewTools = true,
+  historyBase = sourceOid, readAttribution = true, sides, sourceView = false, filePosition, showReviewTools = true, hidePathHeading = false,
 }) {
   const sourceKey = JSON.stringify([sourceMode, sourceFile?.path, sourceOid, historyBase]);
   const [history, setHistory] = useState(null);
@@ -60,14 +64,24 @@ export function DiffViewer({
   const historyPath = sourceOid ? sourceFile?.path : sourceFile?.originalPath || sourceFile?.path;
   const canHistory = Boolean(showReviewTools && historyBase && historyPath);
   const changeHistory = next => setHistory({ key: sourceKey, open: false, point: null, ...next });
+  const [retry, setRetry] = useState(0);
   const { data, loading, error } = useResource('patch', file ? {
     path: repoPath, file: file.path, mode, ...(oid ? { oid } : {}),
-  } : null, mode === 'commit' ? '' : revision);
+  } : null, `${mode === 'commit' ? '' : revision}:${retry}`);
   const rows = useMemo(() => {
     const parsed = data?.patch ? parseDiff(data.patch, mode === 'untracked') : [];
     if (parsed[0]?.type === 'raw') return parsed[0].text.split('\n').map(text => ({ type: 'raw', text }));
     return parsed;
   }, [data?.patch, mode]);
+  const lineStats = useMemo(() => {
+    let added = 0, removed = 0;
+    for (const row of rows) {
+      if (row.type === 'addition') added++;
+      if (row.type === 'deletion') removed++;
+    }
+    return { added, removed };
+  }, [rows]);
+  const hasLineStats = lineStats.added > 0 || lineStats.removed > 0;
   const hunks = useMemo(() => rows.flatMap((row, index) =>
     (row.type === 'meta' || row.type === 'raw') && /^@{2,} /.test(row.text) ? [index] : []), [rows]);
   const [finding, setFinding] = useState(false);
@@ -187,13 +201,17 @@ export function DiffViewer({
     if (finding && event.key === 'Escape' && event.target === findInput.current) { event.preventDefault(); closeFind(); }
   }}>
     <div className={`diff-header ${wide && sourceView ? 'wide-source-header' : ''}`}>
-      {(actions || filePosition || canHistory || canAttribute || canFind || feedback) && <div className="diff-tools">
+      {(actions || filePosition || canHistory || canAttribute || canFind || feedback || hasLineStats) && <div className="diff-tools">
         {actions}
         {filePosition && file && <div className="diff-file-caption">
           <code title={file.path}>{file.path}</code><span>{filePosition}</span>
         </div>}
         <div className="diff-actions">
           <span className="line-copy-feedback" role="status" title={feedback}>{feedback}</span>
+          {hasLineStats && <span className="diff-stats" title={`已显示差异：新增 ${lineStats.added} 行，删除 ${lineStats.removed} 行`}
+            aria-label={`新增 ${lineStats.added} 行，删除 ${lineStats.removed} 行`}>
+            <span className="diff-added">+{lineStats.added}</span><span className="diff-removed">−{lineStats.removed}</span>
+          </span>}
           {canHistory && <button className="panel-action" aria-expanded={Boolean(currentHistory?.open)} aria-label="文件历史" title="文件历史"
             onClick={() => changeHistory({ point, open: !currentHistory?.open })}><History /><span>文件历史</span></button>}
           {canAttribute && <button className="panel-action" aria-pressed={attributing} aria-label="行归属" title="行归属"
@@ -210,7 +228,7 @@ export function DiffViewer({
             <button className="panel-action" key={id} aria-pressed={layout === id} onClick={() => setLayout(id)}>{label}</button>)}
         </div>}
       </div>}
-      {title && file && <div className="diff-title">
+      {title && file && (!hidePathHeading || point) && <div className="diff-title">
         {!sourceView && <CodeXml />}
         <span className="diff-path" title={file.path}>
           <strong>{file.path.split('/').at(-1)}</strong>
@@ -260,8 +278,12 @@ export function DiffViewer({
             <code className="content">{content(row, index)}</code>
           </div>)}
     </div>}
-    {!rows.length && !data?.notice && <div className={`message ${error ? 'error' : ''}`} role={error ? 'alert' : 'status'}>
-      {error || (loading ? '正在读取文件差异…' : !file ? '此范围没有文件变化' : '没有可显示的文本差异。')}
+    {error && <div className={`message error ${rows.length ? 'message-compact' : ''}`}>
+      <span role="alert">{error}</span>
+      <button className="panel-action retry-action" type="button" onClick={() => setRetry(n => n + 1)}>重试读取差异</button>
+    </div>}
+    {!error && !rows.length && !data?.notice && <div className="message" role="status">
+      {loading ? '正在读取文件差异…' : !file ? '此范围没有文件变化' : '没有可显示的文本差异。'}
     </div>}
   </section>;
 }

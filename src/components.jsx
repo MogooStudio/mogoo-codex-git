@@ -1,6 +1,6 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Folder, FileCode2, FileText, FlaskConical, CodeXml, Search, ChevronRight, ChevronDown, ChevronsUpDown, ChevronsDownUp, Copy, Check, AlertCircle, X, LockKeyhole, TriangleAlert } from 'lucide-react';
+import { Folder, FileCode2, FileText, FlaskConical, CodeXml, Search, ArrowLeft, ChevronRight, ChevronDown, ChevronUp, ChevronsUpDown, ChevronsDownUp, Copy, Check, AlertCircle, X, LockKeyhole, TriangleAlert } from 'lucide-react';
 import { layoutGraph } from './graph.mjs';
 import { dateLabel, useResource } from './api.js';
 import { ChatIcon } from './icons.jsx';
@@ -19,8 +19,12 @@ const sourceMode = (group, file) => group === 'working' ? (file.untracked ? 'unt
 const statusName = status => ({ M: '修改', A: '新增', D: '删除', R: '重命名', C: '复制', U: '冲突', '?': '未跟踪', T: '类型变化' }[status] || status);
 const filterByPath = (files, query) => files.filter(file =>
   file.path.toLowerCase().includes(query) || file.originalPath?.toLowerCase().includes(query));
-export function Message({ children, error = false }) {
-  return <div className={`message ${error ? 'error' : ''}`} role={error ? 'alert' : 'status'}>{error && <AlertCircle size={18} />}<span>{children}</span></div>;
+export function Message({ children, error = false, compact = false, onRetry, retryLabel = '重试' }) {
+  return <div className={`message ${error ? 'error' : ''} ${compact ? 'message-compact' : ''}`}>
+    {error && <AlertCircle aria-hidden="true" />}
+    <span role={error ? 'alert' : 'status'}>{children}</span>
+    {onRetry && <button className="panel-action retry-action" type="button" onClick={onRetry}>{retryLabel}</button>}
+  </div>;
 }
 
 function FileIcon({ path }) {
@@ -57,7 +61,7 @@ function FileTree({ files, prefix = '', selected, onSelect, expanded }) {
 }
 
 export function Sidebar({ groups, count, mode, selected, onSelect }) {
-  const sidebar = useRef(null);
+  const sidebar = useRef(null), input = useRef(null);
   const [search, setSearch] = useState('');
   const [tree, setTree] = useState({ revision: 0, expanded: undefined });
   const [hasCollapsedNodes, setHasCollapsedNodes] = useState(true);
@@ -89,8 +93,15 @@ export function Sidebar({ groups, count, mode, selected, onSelect }) {
       <button type="button" className="icon-button source-control-toggle" title={toggleLabel} aria-label={toggleLabel}
         disabled={!sections.length} onClick={() => setTreeExpansion(shouldExpand)}><ToggleIcon aria-hidden="true" /></button>
     </header>
-    <label className="search change-filter"><Search /><input aria-label="按文件名或路径筛选" placeholder="按文件名或路径筛选"
-      value={search} onChange={event => changeSearch(event.target.value)} onKeyDown={event => { if (event.key === 'Escape') changeSearch(''); }} /></label>
+    <label className="search change-filter"><Search aria-hidden="true" /><input ref={input} aria-label="按文件名或路径筛选" placeholder="按文件名或路径筛选"
+      value={search} onChange={event => changeSearch(event.target.value)} onKeyDown={event => {
+        if (event.key === 'Escape' && !event.nativeEvent.isComposing) changeSearch('');
+      }} />
+      {search && <button className="icon-button" type="button" aria-label="清除文件筛选" onClick={() => {
+        changeSearch('');
+        input.current?.focus();
+      }}><X aria-hidden="true" /></button>}
+    </label>
     {sections.map(({ id, label, total, files }) => <details className="change-group" open={tree.expanded !== false}
       key={`${id}-${Boolean(query)}-${tree.revision}`}>
       <summary className={`group ${id === 'conflict' ? 'conflict-group' : ''}`}><ChevronRight className="disclosure" />
@@ -111,23 +122,60 @@ function GraphCell({ row, width, active }) {
 
 export function CommitList({ data, loading, repo, selected, onSelect, search, setSearch, loadMore }) {
   const commits = data?.commits || [], graph = useMemo(() => layoutGraph(commits), [commits]);
-  const matches = commit => `${commit.subject} ${commit.author} ${commit.oid}`.toLowerCase().includes(search.toLowerCase());
-  const firstMatch = search ? commits.find(matches)?.oid : selected;
-  const scroll = useRef(null);
+  const query = search.trim().toLowerCase();
+  const matches = useMemo(() => new Set(query ? commits
+    .filter(commit => `${commit.subject} ${commit.author} ${commit.oid}`.toLowerCase().includes(query))
+    .map(commit => commit.oid) : []), [commits, query]);
+  const matchingOids = [...matches];
+  const matchIndex = matchingOids.indexOf(selected);
+  const firstMatch = query ? matchingOids[0] : selected;
+  const scroll = useRef(null), input = useRef(null);
+  const scrollToCommit = useCallback(oid => {
+    scroll.current?.querySelector(`[data-oid="${oid}"]`)?.scrollIntoView({ block: 'nearest' });
+  }, []);
   useEffect(() => {
-    if (firstMatch) scroll.current?.querySelector(`[data-oid="${firstMatch}"]`)?.scrollIntoView({ block: 'nearest' });
-  }, [firstMatch]);
+    if (firstMatch) scrollToCommit(firstMatch);
+  }, [firstMatch, scrollToCommit]);
+  const goToMatch = direction => {
+    if (!matches.size) return;
+    const start = matchIndex < 0 ? (direction > 0 ? -1 : 0) : matchIndex;
+    const oid = matchingOids[(start + direction + matches.size) % matches.size];
+    scrollToCommit(oid);
+    onSelect(oid);
+  };
+  const clearSearch = () => {
+    setSearch('');
+    input.current?.focus();
+  };
   return <>
     <div className="history-tools">
-      <label className="search"><Search /><input aria-label="搜索已加载提交" placeholder="搜索提交、作者或哈希"
-        value={search} onChange={e => setSearch(e.target.value)} />
-        {search && <button className="icon-button" aria-label="清除搜索" onClick={() => setSearch('')}><X /></button>}
+      <label className="search"><Search /><input ref={input} aria-label="搜索已加载提交" placeholder="搜索提交、作者或哈希"
+        value={search} onChange={event => setSearch(event.target.value)} onKeyDown={event => {
+          if (event.nativeEvent.isComposing) return;
+          if (event.key === 'Escape' && search) {
+            event.preventDefault();
+            clearSearch();
+          }
+          if (event.key === 'Enter' && matches.size) {
+            event.preventDefault();
+            goToMatch(event.shiftKey ? -1 : 1);
+          }
+        }} />
+        {search && <button className="icon-button" aria-label="清除搜索" onClick={clearSearch}><X /></button>}
       </label>
     </div>
+    {query && <div className="history-search-results">
+      <span className="search-result" role="status">{matchIndex >= 0 ? `${matchIndex + 1} / ${matches.size} 个匹配` : `${matches.size} 个匹配`}</span>
+      {matches.size > 0 && <div className="history-search-actions">
+        <button className="panel-action" type="button" aria-label="上一条匹配提交" title="上一条匹配提交（Shift+Enter）"
+          disabled={matches.size < 2} onClick={() => goToMatch(-1)}><ChevronUp aria-hidden="true" /></button>
+        <button className="panel-action" type="button" aria-label="下一条匹配提交" title="下一条匹配提交（Enter）"
+          onClick={() => goToMatch(1)}><ChevronDown aria-hidden="true" /></button>
+      </div>}
+    </div>}
     <div className="commit-scroll" ref={scroll}>
-      {search && <p className="search-result" role="status">{commits.filter(matches).length} 个匹配 · 保留提交关系</p>}
       {commits.map((commit, index) => <button key={commit.oid} data-oid={commit.oid}
-        className={`commit ${selected === commit.oid ? 'active' : ''} ${!matches(commit) ? 'dimmed' : ''}`}
+        className={`commit ${selected === commit.oid ? 'active' : ''} ${query && !matches.has(commit.oid) ? 'dimmed' : ''}`}
         style={{ '--graph-width': `${graph.width}px` }} aria-pressed={selected === commit.oid} onClick={() => onSelect(commit.oid)}
         title={`${commit.subject}\n${commit.author} · ${dateLabel(commit.date)}\n${commit.oid}`}>
         <GraphCell row={graph.rows[index]} width={graph.width} active={selected === commit.oid} />
@@ -152,22 +200,35 @@ export function FilePicker({ files, file, onSelect, sections, mode, count }) {
   const menu = useRef(null), popup = useRef(null), filter = useRef(null);
   const [open, setOpen] = useState(false), [position, setPosition] = useState(null);
   const [query, setQuery] = useState('');
-  const options = sections ? sections.map(([id, label, items]) => [id, label, filterByPath(items, query.trim().toLowerCase())])
-    .filter(([, , items]) => items.length) : [['', '', files]];
+  const term = query.trim().toLowerCase();
+  const options = (sections || [['', '', files]])
+    .map(([id, label, items]) => [id, label, filterByPath(items, term)])
+    .filter(([, , items]) => items.length);
   const close = () => { menu.current.open = false; setOpen(false); };
   const navigate = event => {
-    if (!open) return;
-    const buttons = [...popup.current.querySelectorAll('button')];
-    if (event.target === filter.current && event.key !== 'ArrowDown') return;
+    if (!open || !popup.current || event.nativeEvent.isComposing) return;
+    const buttons = [...popup.current.querySelectorAll('.file-picker-option')];
+    if (event.target === filter.current) {
+      if (event.key === 'Enter' && buttons.length === 1) {
+        event.preventDefault();
+        buttons[0].click();
+      }
+      if (!['ArrowDown', 'ArrowUp', 'Tab'].includes(event.key)) return;
+      if (event.key === 'Tab' && event.shiftKey) {
+        event.preventDefault(); close(); menu.current.querySelector('summary').focus(); return;
+      }
+    }
     if (!buttons.length) return;
     const index = buttons.indexOf(document.activeElement);
-    if (index < 0 && (event.key === 'ArrowDown' || (event.key === 'Tab' && !event.shiftKey))) {
-      event.preventDefault(); buttons[0].focus();
+    if (index < 0 && (['ArrowDown', 'ArrowUp'].includes(event.key) || (event.key === 'Tab' && !event.shiftKey))) {
+      event.preventDefault(); buttons[event.key === 'ArrowUp' ? buttons.length - 1 : 0].focus();
     } else if (index >= 0 && ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
       event.preventDefault();
       const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length;
       buttons[next].focus();
-    } else if (event.key === 'Tab' && ((event.shiftKey && index === 0) || (!event.shiftKey && index === buttons.length - 1))) {
+    } else if (event.key === 'Tab' && event.shiftKey && index === 0) {
+      event.preventDefault(); filter.current?.focus();
+    } else if (event.key === 'Tab' && !event.shiftKey && index === buttons.length - 1) {
       event.preventDefault(); close(); menu.current.querySelector('summary').focus();
     }
   };
@@ -180,7 +241,7 @@ export function FilePicker({ files, file, onSelect, sections, mode, count }) {
       const below = Math.max(0, window.innerHeight - rect.bottom - gap - margin);
       const above = Math.max(0, rect.top - gap - margin);
       const upward = below < 240 && above > below;
-      const width = Math.min(sections ? Math.max(rect.width, 340) : rect.width, window.innerWidth - margin * 2);
+      const width = Math.min(Math.max(rect.width, 340), window.innerWidth - margin * 2);
       setPosition({ left: Math.max(margin, Math.min(rect.left, window.innerWidth - width - margin)), width,
         top: upward ? 'auto' : rect.bottom + gap,
         bottom: upward ? window.innerHeight - rect.top + gap : 'auto',
@@ -189,7 +250,7 @@ export function FilePicker({ files, file, onSelect, sections, mode, count }) {
     const outside = event => { if (!menu.current.contains(event.target) && !popup.current?.contains(event.target)) close(); };
     const escape = event => { if (event.key === 'Escape') { event.preventDefault(); close(); anchor.focus(); } };
     place();
-    const focus = sections ? requestAnimationFrame(() => filter.current?.focus()) : null;
+    const focus = requestAnimationFrame(() => filter.current?.focus());
     const observer = new ResizeObserver(place);
     observer.observe(anchor);
     window.addEventListener('resize', place);
@@ -197,14 +258,14 @@ export function FilePicker({ files, file, onSelect, sections, mode, count }) {
     document.addEventListener('pointerdown', outside);
     document.addEventListener('keydown', escape);
     return () => {
-      if (focus !== null) cancelAnimationFrame(focus);
+      cancelAnimationFrame(focus);
       observer.disconnect();
       window.removeEventListener('resize', place);
       window.removeEventListener('scroll', place, true);
       document.removeEventListener('pointerdown', outside);
       document.removeEventListener('keydown', escape);
     };
-  }, [open, Boolean(sections)]);
+  }, [open]);
   return <details className="file-menu" ref={menu} onKeyDown={navigate} onToggle={event => {
     const next = event.currentTarget.open;
     if (next) setQuery('');
@@ -216,13 +277,14 @@ export function FilePicker({ files, file, onSelect, sections, mode, count }) {
       <ChevronDown />
     </summary>
     {open && createPortal(<div className="file-menu-list file-menu-popup" ref={popup} style={position || { visibility: 'hidden' }}>
-      {sections && <label className="search file-menu-filter"><Search /><input ref={filter} aria-label="按文件名或路径筛选" placeholder="按文件名或路径筛选" value={query} onChange={event => setQuery(event.target.value)} /></label>}
+      <label className="search file-menu-filter"><Search aria-hidden="true" /><input ref={filter} aria-label="按文件名或路径筛选"
+        placeholder="按文件名或路径筛选" value={query} onChange={event => setQuery(event.target.value)} /></label>
       {options.map(([id, label, items]) => <div key={id} role={label ? 'group' : undefined} aria-label={label || undefined}>
         {label && <div className={`file-menu-group ${id === 'conflict' ? 'conflict-group' : ''}`}>{label}<span>{items.length}</span></div>}
         {items.map(item => {
           const itemMode = sourceMode(id, item);
           const selected = item.path === file?.path && (!sections || mode === itemMode);
-          return <button key={item.path} className={selected ? 'selected' : ''} aria-pressed={selected}
+          return <button key={item.path} type="button" className={`file-picker-option ${selected ? 'selected' : ''}`} aria-pressed={selected}
             title={item.originalPath ? `${item.originalPath} → ${item.path}` : item.path}
             onClick={() => {
               if (sections) onSelect(itemMode, item.path);
@@ -234,18 +296,20 @@ export function FilePicker({ files, file, onSelect, sections, mode, count }) {
           </button>;
         })}
       </div>)}
-      {!options.length && <div className="file-menu-empty" role="status">{query.trim() ? '没有匹配的路径。' : '工作区没有文件变化。'}</div>}
+      {!options.length && <div className="file-menu-empty" role="status">{term ? '没有匹配的路径。' : '没有文件改动。'}</div>}
     </div>, document.body)}
   </details>;
 }
 
-export function CommitInspector({ repoPath, oid, onClose, comparison, historyBase, readAttribution, showReviewTools }) {
-  const { data, loading, error } = useResource('commit', oid ? { path: repoPath, oid } : null);
+export function CommitInspector({ repoPath, oid, onClose, onBack, comparison, historyBase, readAttribution, showReviewTools, hidePathHeading }) {
+  const [retry, setRetry] = useState(0);
+  const { data, loading, error } = useResource('commit', oid ? { path: repoPath, oid } : null, retry);
   const [selectedFile, setSelectedFile] = useState('');
   const [copied, setCopied] = useState(false), [copyError, setCopyError] = useState('');
   const timer = useRef(null);
   useEffect(() => { setCopied(false); setCopyError(''); return () => clearTimeout(timer.current); }, [oid]);
   const file = data?.files.find(f => f.path === selectedFile) || data?.files[0];
+  const inlineFiles = Boolean(onClose && file && data.files.length <= 5);
   const copySha = async () => {
     try {
       await navigator.clipboard.writeText(oid);
@@ -257,10 +321,14 @@ export function CommitInspector({ repoPath, oid, onClose, comparison, historyBas
   };
   if (!oid) return <section className="details"><Message>选择一条提交，查看文件与差异。</Message></section>;
   return <section className="details">
-    {loading ? <Message>正在读取提交详情…</Message> : error ? <Message error>{error}</Message> : data && <>
+    {onBack && <button type="button" className="panel-action history-back" onClick={onBack} autoFocus>
+      <ArrowLeft aria-hidden="true" />返回提交列表
+    </button>}
+    {loading ? <Message>正在读取提交详情…</Message> :
+      error ? <Message error onRetry={() => setRetry(n => n + 1)} retryLabel="重试读取提交">{error}</Message> : data && <>
       <div className="detail-titlebar">
         <h2 className="detail-heading">{data.body.split('\n')[0] || '（无提交说明）'}</h2>
-        {onClose && <button className="panel-action" aria-label="关闭提交详情" title="关闭提交详情" onClick={onClose}><X /></button>}
+        {onClose && <button className="panel-action commit-detail-close" aria-label="关闭提交详情" title="关闭提交详情" onClick={onClose}><X /></button>}
       </div>
       <div className="comparison">
         <button className="copy-sha" title="复制完整提交哈希" aria-label="复制完整提交哈希" onClick={copySha}>
@@ -271,19 +339,19 @@ export function CommitInspector({ repoPath, oid, onClose, comparison, historyBas
         {copyError && <span role="alert">{copyError}</span>}
       </div>
       {data.body.includes('\n') && <details className="commit-body"><summary>完整提交说明</summary><pre>{data.body}</pre></details>}
-      {onClose && data.files.length > 0 && <div className="commit-files" aria-label="提交变更文件">
+      {inlineFiles && <div className="commit-files" aria-label="提交变更文件">
         {data.files.map(item => <button key={item.path} className="commit-file" aria-pressed={item.path === file?.path}
           title={item.path} onClick={() => setSelectedFile(item.path)}>
           <FileIcon path={item.path} /><code>{item.path}</code>
           <span className={`status-label status-${item.status}`}>{statusName(item.status)}</span>
         </button>)}
       </div>}
-      <div className={onClose && data.files.length ? 'commit-picker' : undefined}>
+      {file && <div className={inlineFiles ? 'commit-picker' : 'commit-picker-searchable'}>
         <FilePicker files={data.files} file={file} onSelect={setSelectedFile} />
-      </div>
+      </div>}
       <DiffViewer repoPath={repoPath} file={file} mode="commit" oid={oid} oldOid={data.parents[0]} comparison={comparison}
-        historyBase={historyBase} readAttribution={readAttribution} showReviewTools={showReviewTools}
-        filePosition={onClose && file ? `${data.files.indexOf(file) + 1} / ${data.files.length}` : undefined} />
+        historyBase={historyBase} readAttribution={readAttribution} showReviewTools={showReviewTools} hidePathHeading={hidePathHeading}
+        filePosition={inlineFiles ? `${data.files.indexOf(file) + 1} / ${data.files.length}` : undefined} />
     </>}
   </section>;
 }
@@ -293,8 +361,8 @@ export function Changes({ repo, groups, mode, file, onSelect, hidden }) {
     <DiffViewer repoPath={repo.root} file={file} mode={mode === 'conflict' ? 'unstaged' : mode} revision={repo.refreshedAt} comparison={comparisons[mode]}
       historyBase={repo.head} sides={sides[mode]} sourceView
       actions={<>
-        <div className="change-file-picker"><FilePicker sections={sourceSections(groups)} count={repo.files.length}
-          file={file} mode={mode} onSelect={onSelect} /></div>
+        {file && <div className="change-file-picker"><FilePicker sections={sourceSections(groups)} count={repo.files.length}
+          file={file} mode={mode} onSelect={onSelect} /></div>}
         {groups.conflict.length > 0 && <button className="panel-action conflict-group" onClick={() => {
           const first = groups.conflict[0];
           onSelect('conflict', first.path);
@@ -304,5 +372,48 @@ export function Changes({ repo, groups, mode, file, onSelect, hidden }) {
 }
 
 export function Worktrees({ repo }) {
-  return <section className="worktrees-content"><table className="worktree-table"><thead><tr><th>路径</th><th>分支</th><th>HEAD</th><th>聊天</th></tr></thead><tbody>{repo.worktrees.map(tree => <tr key={tree.worktree}><td><span className="worktree-value"><Folder /><code>{tree.worktree}</code></span>{tree.locked && <span className="tree-note"><LockKeyhole size={13} />已锁定</span>}{tree.prunable && <span className="tree-note">路径不可用</span>}</td><td><code className="ref">{tree.branch?.replace('refs/heads/', '') || (tree.bare ? '裸仓库' : '分离的 HEAD')}</code></td><td><code className="ref">{tree.HEAD?.slice(0,7) || '—'}</code></td><td>{tree.worktree.replaceAll('\\','/').toLowerCase() === repo.root.replaceAll('\\','/').toLowerCase() && <span className="worktree-value"><ChatIcon />当前聊天</span>}</td></tr>)}</tbody></table>{repo.worktrees.length === 1 && <p className="worktree-note">没有其他工作树</p>}{!repo.worktrees.length && <Message>没有可显示的工作树。</Message>}</section>;
+  const [notice, setNotice] = useState('');
+  const normalize = path => {
+    const clean = path.replaceAll('\\', '/').replace(/\/$/, '');
+    return /^(?:[a-z]:|\/\/)/i.test(clean) ? clean.toLowerCase() : clean;
+  };
+  const currentPath = normalize(repo.root);
+  const entries = repo.worktrees.map(tree => ({
+    ...tree,
+    name: tree.worktree.replaceAll('\\', '/').split('/').filter(Boolean).at(-1) || tree.worktree,
+    current: normalize(tree.worktree) === currentPath,
+  })).sort((a, b) => Number(b.current) - Number(a.current));
+  const copyPath = async path => {
+    setNotice('');
+    try {
+      await navigator.clipboard.writeText(path);
+      setNotice('已复制路径');
+    } catch { setNotice('复制失败，可选中路径手动复制。'); }
+  };
+  return <section className="worktrees-content" aria-label="工作树">
+    {entries.length > 0 ? <>
+      <div className="worktree-overview">
+        <span>{entries.length} 个工作树</span>
+        <span role="status">{notice}</span>
+      </div>
+      <ul className="worktree-list">
+        {entries.map(tree => <li key={tree.worktree} className="worktree-entry" data-current={tree.current}>
+          <div className="worktree-entry-heading">
+            <Folder aria-hidden="true" />
+            <strong title={tree.name}>{tree.name}</strong>
+            {tree.current && <span className="worktree-current"><ChatIcon />当前聊天</span>}
+            <button className="panel-action worktree-copy" type="button" aria-label={`复制工作树路径：${tree.name}`}
+              title="复制路径" onClick={() => void copyPath(tree.worktree)}><Copy aria-hidden="true" /></button>
+          </div>
+          <code className="worktree-path">{tree.worktree}</code>
+          <div className="worktree-meta">
+            <span className="worktree-branch">{tree.branch?.replace(/^refs\/heads\//, '') || (tree.bare ? '裸仓库' : '未关联分支')}</span>
+            {tree.HEAD && <code title={tree.HEAD}>{tree.HEAD.slice(0, 7)}</code>}
+            {tree.locked && <span><LockKeyhole aria-hidden="true" size={13} />已锁定</span>}
+            {tree.prunable && <span className="worktree-warning">路径不可用</span>}
+          </div>
+        </li>)}
+      </ul>
+    </> : <Message>没有可显示的工作树。</Message>}
+  </section>;
 }
